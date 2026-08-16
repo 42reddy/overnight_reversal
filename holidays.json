@@ -1,0 +1,13 @@
+{
+  "note": "NSE trading-holiday calendar, used by bot.py's persistent loop to skip closed-market days (in addition to weekends, which are always skipped regardless of this file). Only fixed-date national holidays that NSE reliably observes every year are pre-filled below (Republic Day, Independence Day, Gandhi Jayanti, Christmas) -- verify these against the official NSE circular for the current year before relying on them. Lunar-calendar holidays (Holi, Ram Navami, Good Friday, Eid, Ganesh Chaturthi, Dussehra, Diwali/Laxmi Pujan, Diwali-Balipratipada, Guru Nanak Jayanti, Mahashivratri, etc.) are NOT filled in -- their dates shift every year and must be added by hand from nseindia.com's published trading-holiday list for each year you run this bot unattended. An incomplete list is low-risk (worst case: the bot wakes up on a closed day, its API calls fail harmlessly and get logged, no order gets placed), but keep it current so you're not missing real profitable trading days by leaving them out by mistake, or wasting a wake cycle on days already closed.",
+  "holidays": [
+    "2026-01-26",
+    "2026-08-15",
+    "2026-10-02",
+    "2026-12-25",
+    "2027-01-26",
+    "2027-08-15",
+    "2027-10-02",
+    "2027-12-25"
+  ]
+}
