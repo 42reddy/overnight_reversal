@@ -39,6 +39,17 @@ logger = logging.getLogger(__name__)
 API_VERSION = "2.0"
 
 
+def _extract_order_id(resp) -> str:
+    """place_order's response.data is MultiOrderV3Data (order_ids: list[str])
+    even for a single order placed via PlaceOrderV3Request — the SDK unified
+    single/multi-order placement onto one endpoint. We only ever place one
+    order per call, so take the first id."""
+    order_ids = resp.data.order_ids
+    if not order_ids:
+        raise RuntimeError(f"place_order returned no order_ids: {resp}")
+    return str(order_ids[0])
+
+
 class Executor:
     def __init__(self, api_client: upstox_client.ApiClient, cfg: ConfigParser):
         self.order_v3 = upstox_client.OrderApiV3(api_client)
@@ -91,16 +102,32 @@ class Executor:
         )
         try:
             resp = self.order_v3.place_order(body)
-            order_id = str(resp.data.order_id)
-            logger.info(
-                f"ENTRY placed: {ticker} {transaction} {position['qty']}@{limit_price} "
-                f"product={product} order_id={order_id}"
-            )
-            return order_id, limit_price
         except ApiException as e:
             logger.error(f"ENTRY FAILED: {ticker} {transaction} {position['qty']} "
                          f"status={e.status} body={e.body}")
             return None, limit_price
+
+        try:
+            order_id = _extract_order_id(resp)
+        except Exception as e:
+            # place_order() succeeded — Upstox accepted the order — but we
+            # couldn't parse the response. The order is LIVE and untracked;
+            # never let this crash the rest of the entry loop for the other
+            # positions. Logged loud enough to find manually in the Upstox
+            # order book.
+            logger.error(
+                f"ENTRY placed at Upstox but order_id could not be parsed from the "
+                f"response — CHECK THE UPSTOX ORDER BOOK MANUALLY for {ticker} "
+                f"{transaction} {position['qty']}@{limit_price}. Raw response: {resp!r}  "
+                f"Parse error: {e}"
+            )
+            return None, limit_price
+
+        logger.info(
+            f"ENTRY placed: {ticker} {transaction} {position['qty']}@{limit_price} "
+            f"product={product} order_id={order_id}"
+        )
+        return order_id, limit_price
 
     def place_entries(self, positions: list) -> dict:
         """Fire one entry order per position, back-to-back. Returns
@@ -180,13 +207,23 @@ class Executor:
         )
         try:
             resp = self.order_v3.place_order(body)
-            order_id = str(resp.data.order_id)
-            logger.info(f"EXIT placed: {ticker} {transaction} {qty} (MARKET) order_id={order_id}")
-            return order_id
         except ApiException as e:
             logger.error(f"EXIT FAILED: {ticker} {transaction} {qty} "
                          f"status={e.status} body={e.body}")
             return None
+
+        try:
+            order_id = _extract_order_id(resp)
+        except Exception as e:
+            logger.error(
+                f"EXIT placed at Upstox but order_id could not be parsed from the "
+                f"response — CHECK THE UPSTOX ORDER BOOK MANUALLY for {ticker} "
+                f"{transaction} {qty} (MARKET). Raw response: {resp!r}  Parse error: {e}"
+            )
+            return None
+
+        logger.info(f"EXIT placed: {ticker} {transaction} {qty} (MARKET) order_id={order_id}")
+        return order_id
 
     def place_exits(self, positions: list) -> dict:
         """positions: list of basket entries with entry_status filled/partial.

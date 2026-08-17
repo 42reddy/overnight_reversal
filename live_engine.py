@@ -40,6 +40,7 @@ class SignalEngine:
         self.n_long = int(s["n_long"])
         self.n_short = int(s["n_short"])
         self.max_share_price = float(s["max_share_price"])
+        self.max_overnight_move_pct = float(s["max_overnight_move_pct"])
         self.instruments = instruments if instruments is not None else load_instruments(cfg)
 
         self.history_api = upstox_client.HistoryApi(api_client)
@@ -135,6 +136,8 @@ class SignalEngine:
             if price > self.max_share_price:
                 continue
             r_co = price / prev - 1.0
+            if abs(r_co) >= self.max_overnight_move_pct / 100.0:
+                continue
             rows.append({"ticker": ticker, "instrument_key": self.instruments[ticker]["instrument_key"],
                          "price": price, "prev_close": prev, "r_co": r_co})
 
