@@ -115,10 +115,16 @@ class SignalEngine:
     def build_signals(self) -> list:
         """
         Ranks the universe on this morning's overnight return and returns
-        the candidate basket:
-            [{"ticker", "instrument_key", "direction" ("long"/"short"),
-              "price", "overnight_ret"}, ...]
-        Length <= n_long + n_short (fewer if the universe/data comes up short).
+        the full pool of tradeable candidates, sorted ascending by
+        overnight_ret (most negative — biggest losers — first):
+            [{"ticker", "instrument_key", "price", "overnight_ret"}, ...]
+
+        This is the whole surviving pool, NOT just the n_long + n_short
+        basket — sizing.PositionSizer.size_positions() picks the actual
+        long/short legs from it (walking inward from both ends of the
+        sort), backfilling from the next-ranked candidate whenever one
+        can't be sized (no instrument_key, qty rounds to 0, etc.) so a
+        sizing-stage drop doesn't just shrink the basket.
         """
         tickers = [t for t in self._tradeable_tickers() if t in self.prev_close]
         if not tickers:
@@ -153,22 +159,14 @@ class SignalEngine:
             r["overnight_ret"] = r["r_co"]  # demeaning disabled for now
 
         rows.sort(key=lambda r: r["overnight_ret"])  # ascending: most negative first
-        longs = rows[: self.n_long]
-        remaining = rows[self.n_long:]                # never overlap with longs, even if rows is short
-        shorts = list(reversed(remaining[-self.n_short:])) if self.n_short > 0 and remaining else []
 
-        signals = []
-        for r in longs:
-            signals.append({"ticker": r["ticker"], "instrument_key": r["instrument_key"],
-                            "direction": "long", "price": r["price"],
-                            "overnight_ret": r["overnight_ret"]})
-        for r in shorts:
-            signals.append({"ticker": r["ticker"], "instrument_key": r["instrument_key"],
-                            "direction": "short", "price": r["price"],
-                            "overnight_ret": r["overnight_ret"]})
+        candidates = [{"ticker": r["ticker"], "instrument_key": r["instrument_key"],
+                       "price": r["price"], "overnight_ret": r["overnight_ret"]} for r in rows]
 
         logger.info(
-            "Basket: LONG " + ", ".join(f"{s['ticker']}({s['overnight_ret']:+.2%})" for s in signals if s["direction"] == "long")
-            + "  |  SHORT " + ", ".join(f"{s['ticker']}({s['overnight_ret']:+.2%})" for s in signals if s["direction"] == "short")
+            f"Ranked {len(candidates)} candidate(s): most-negative "
+            + ", ".join(f"{c['ticker']}({c['overnight_ret']:+.2%})" for c in candidates[:5])
+            + "  ...  most-positive "
+            + ", ".join(f"{c['ticker']}({c['overnight_ret']:+.2%})" for c in reversed(candidates[-5:]))
         )
-        return signals
+        return candidates

@@ -179,7 +179,7 @@ with tab_today:
     with c2:
         if st.button("2. Run entry", disabled=_action_disabled(),
                      help="Ranks the universe on this morning's LTP vs prior close, "
-                          "sizes the basket, and fires LIMIT entry orders."):
+                          "sizes the basket, and fires MARKET entry orders."):
             with st.spinner("Placing entries..."):
                 try:
                     bot.run_entry_pass()
@@ -230,7 +230,7 @@ with tab_today:
                     live_pnl = (p["entry_fill_price"] - p["exit_fill_price"]) * qty
             rows.append({
                 "Ticker": t, "Dir": p["direction"], "Qty": p["qty"],
-                "Signal px": p["signal_price"], "Entry limit": p["entry_limit_price"],
+                "Signal px": p["signal_price"], "Ranked at": p["entry_limit_price"],
                 "Entry status": p["entry_status"], "Entry fill": p["entry_fill_price"],
                 "Exit status": p["exit_status"], "Exit fill": p["exit_fill_price"],
                 "PnL": live_pnl,

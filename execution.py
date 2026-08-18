@@ -3,20 +3,22 @@ execution.py  —  Order placement for the overnight-reversal basket
 ──────────────────────────────────────────────────────────────────
 Two passes a day:
 
-  1. ENTRY (~09:15): one LIMIT order per sized position, offset from the
-     signal price by STRATEGY.entry_limit_buffer_bps *through* the market
-     (higher for buys, lower for sells). Default is 0 bps — the LIMIT price
-     is placed at exactly the 09:15 open price fetched by build_signals(),
-     on the assumption that it's very likely to fill within the 09:15-09:20
-     window without needing to chase it through the market; set this > 0 if
-     fills start coming back too thin. Both legs go in on product=I
-     (cash-segment intraday) at the same flat leverage — nothing is held
-     overnight, so there's no reason to pay for MTF financing on the long
-     leg, and using one product/leverage on both sides keeps the basket
-     dollar-neutral.
+  1. ENTRY (~09:15): one MARKET order per sized position. Both legs go in
+     on product=I (cash-segment intraday) at the same flat leverage —
+     nothing is held overnight, so there's no reason to pay for MTF
+     financing on the long leg, and using one product/leverage on both
+     sides keeps the basket dollar-neutral. (Previously LIMIT orders offset
+     from the signal price by STRATEGY.entry_limit_buffer_bps — switched to
+     MARKET because the LIMIT price, computed from a price snapshot that's
+     already a beat or two stale by the time the order reaches the
+     exchange, was missing the market often enough that a large chunk of
+     the basket went unfilled. MARKET guarantees the fill; see the note on
+     slippage in the class docstring below.)
 
-  2. CANCEL UNFILLED (~09:20): anything still open/pending gets cancelled —
-     we don't chase fills past the first few minutes.
+  2. CANCEL UNFILLED (~09:20): still runs as a safety net for any entry
+     that somehow comes back pending/open (e.g. a rare after-market-order
+     state) — MARKET orders normally resolve immediately, so this pass is
+     expected to find nothing to do most days.
 
   3. EXIT (~15:20): MARKET orders closing out whatever actually got filled.
      Market orders on liquid large/mid-caps fill within the same second, so
@@ -57,43 +59,33 @@ class Executor:
         s = cfg["STRATEGY"]
         self.long_product = s.get("long_product", "MTF")
         self.short_product = s.get("short_product", "I")
-        self.buffer_bps = float(s.get("entry_limit_buffer_bps", 15))
-
-    # ── Pricing ──────────────────────────────────────────────────
-
-    def _limit_price(self, price: float, transaction_type: str) -> float:
-        """Offset the signal price through the market so the limit order has
-        a realistic shot at filling, without chasing an unlimited amount."""
-        buf = self.buffer_bps / 10_000.0
-        if transaction_type == "BUY":
-            px = price * (1 + buf)
-        else:
-            px = price * (1 - buf)
-        return round(px, 1)
 
     # ── Entry ────────────────────────────────────────────────────
 
     def place_entry(self, position: dict) -> tuple:
         """
-        Place one LIMIT entry order for a sized position dict (from
+        Place one MARKET entry order for a sized position dict (from
         sizing.PositionSizer): {ticker, instrument_key, direction, qty, price}.
 
-        Returns (order_id, limit_price) — order_id is None if the order
-        was rejected outright.
+        Returns (order_id, signal_price) — order_id is None if the order
+        was rejected outright. signal_price is the price build_signals()
+        ranked/sized on, returned for logging only (a MARKET order has no
+        limit price of its own — the actual fill price comes back later via
+        confirm_fills/cancel_unfilled).
         """
         ticker = position["ticker"]
         direction = position["direction"]
         transaction = "BUY" if direction == "long" else "SELL"
         product = self.long_product if direction == "long" else self.short_product
-        limit_price = self._limit_price(position["price"], transaction)
+        signal_price = position["price"]
 
         body = upstox_client.PlaceOrderV3Request(
             quantity=position["qty"],
             product=product,
             validity="DAY",
-            price=limit_price,
+            price=0,
             instrument_token=position["instrument_key"],
-            order_type="LIMIT",
+            order_type="MARKET",
             transaction_type=transaction,
             disclosed_quantity=0,
             trigger_price=0,
@@ -105,7 +97,7 @@ class Executor:
         except ApiException as e:
             logger.error(f"ENTRY FAILED: {ticker} {transaction} {position['qty']} "
                          f"status={e.status} body={e.body}")
-            return None, limit_price
+            return None, signal_price
 
         try:
             order_id = _extract_order_id(resp)
@@ -118,20 +110,20 @@ class Executor:
             logger.error(
                 f"ENTRY placed at Upstox but order_id could not be parsed from the "
                 f"response — CHECK THE UPSTOX ORDER BOOK MANUALLY for {ticker} "
-                f"{transaction} {position['qty']}@{limit_price}. Raw response: {resp!r}  "
+                f"{transaction} {position['qty']} (MARKET). Raw response: {resp!r}  "
                 f"Parse error: {e}"
             )
-            return None, limit_price
+            return None, signal_price
 
         logger.info(
-            f"ENTRY placed: {ticker} {transaction} {position['qty']}@{limit_price} "
+            f"ENTRY placed: {ticker} {transaction} {position['qty']} (MARKET) "
             f"product={product} order_id={order_id}"
         )
-        return order_id, limit_price
+        return order_id, signal_price
 
     def place_entries(self, positions: list) -> dict:
         """Fire one entry order per position, back-to-back. Returns
-        {ticker: (order_id, limit_price)}."""
+        {ticker: (order_id, signal_price)}."""
         results = {}
         for pos in positions:
             results[pos["ticker"]] = self.place_entry(pos)
