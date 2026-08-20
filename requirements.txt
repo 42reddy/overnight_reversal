@@ -1,5 +1,6 @@
+# Kotak Neo Trade API — trading (orders, cancels, positions). Not on PyPI:
+#   pip install "git+https://github.com/Kotak-Neo/Kotak-neo-api-v2.git@v2.0.2#egg=neo_api_client"
 upstox-python-sdk>=2.0.0
-upstox-totp>=1.0.8
 pyotp>=2.9.0
 pandas>=2.0.0
 numpy>=1.24.0

@@ -20,8 +20,8 @@ Per slot (base allocation):
                                                      notional the floor threw
                                                      away)
 
-Both legs use the same flat STRATEGY.intraday_leverage (both sit on Upstox
-product=I, cash-segment intraday — see execution.py). Nothing is held
+Both legs use the same flat STRATEGY.intraday_leverage (both sit on Kotak
+Neo product=MIS, cash-segment intraday — see execution.py). Nothing is held
 overnight, so there's no MTF financing to pay for on the long leg either;
 using one flat leverage on both sides is also what keeps each day's basket
 dollar-neutral (equal notional long vs short per slot).

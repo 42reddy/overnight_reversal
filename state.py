@@ -21,7 +21,7 @@ Position schema (one entry per ticker in today's basket):
     "entry_filled_qty":  int,
     "entry_fill_price":  float | null,
     "exit_order_id":     str | null,
-    "exit_status":       "pending" | "filled" | "rejected" | null,
+    "exit_status":       "pending" | "filled" | "rejected" | "closed_manually" | null,
     "exit_fill_price":   float | null,
 }
 """
@@ -95,7 +95,8 @@ class BasketState:
     def has_open_legs(self) -> bool:
         """Any position still holding shares that need to be exited."""
         return any(
-            p["entry_status"] in ("filled", "partial") and p.get("exit_status") != "filled"
+            p["entry_status"] in ("filled", "partial")
+            and p.get("exit_status") not in ("filled", "closed_manually")
             for p in self.positions.values()
         )
 

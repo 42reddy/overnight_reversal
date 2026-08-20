@@ -98,9 +98,9 @@ phase_key, phase_label, phase_kind = market_phase(cfg)
 with st.sidebar:
     st.header("Session")
     if sandbox:
-        st.success("SANDBOX — paper trading")
+        st.success("DRY-RUN — simulated locally, no orders sent")
     else:
-        st.error("LIVE — real orders")
+        st.error("LIVE — real orders on Kotak Neo")
 
     st.caption(f"IST now: {datetime.now(IST).strftime('%H:%M:%S')}")
     if st.button("Refresh"):
@@ -113,7 +113,7 @@ with st.sidebar:
 
     if not st.session_state.logged_in:
         if st.button("Login", type="primary"):
-            with st.spinner("Logging in to Upstox..."):
+            with st.spinner("Logging in to Kotak Neo (trading) + Upstox (market data)..."):
                 try:
                     bot = ReversalBot(cfg, st.session_state.capital)
                     bot.login()
@@ -242,7 +242,7 @@ with tab_today:
                 else (f"color: {CRITICAL_TEXT}" if isinstance(v, (int, float)) and v < 0 else ""),
                 subset=["PnL"],
             ),
-            width=True, hide_index=True,
+            width="stretch", hide_index=True,
         )
 
 
@@ -363,7 +363,7 @@ with tab_portfolio:
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
             xaxis=dict(showgrid=False), yaxis=dict(gridcolor="#e1e0d9", tickprefix="₹"),
         )
-        st.plotly_chart(fig_equity, use_container_width=True)
+        st.plotly_chart(fig_equity, width="stretch")
 
         bar_colors = [GOOD_TEXT if p >= 0 else CRITICAL_TEXT for p in pnls]
         fig_daily = go.Figure()
@@ -374,6 +374,6 @@ with tab_portfolio:
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
             xaxis=dict(showgrid=False), yaxis=dict(gridcolor="#e1e0d9", tickprefix="₹"),
         )
-        st.plotly_chart(fig_daily, use_container_width=True)
+        st.plotly_chart(fig_daily, width="stretch")
     else:
         st.caption("No finalized trading days yet.")

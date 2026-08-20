@@ -1,144 +1,119 @@
 """
-auth.py  —  Upstox headless TOTP login
-────────────────────────────────────────
-Uses the `upstox-totp` community package for clean headless auth.
-Caches the daily token to disk. Token valid until 3:30 AM next day.
+auth.py  —  Broker sessions: Kotak Neo (trading) + Upstox (market data)
+─────────────────────────────────────────────────────────────────────────
+Two independent brokers, two independent auth flows:
 
-Upstox's SANDBOX environment only serves order/portfolio APIs — it has no
-market data (no historical candles, no quotes) at all, in or out of market
-hours. So when SANDBOX is enabled, bot.py pairs a sandbox order client
-(get_client, mode="sandbox") with a second LIVE-mode client used only for
-data (get_client(cfg, mode="live")), which needs real mobile/password/pin/
-totp_secret in config.ini. Orders still only ever go through the sandbox
-client, so nothing gets placed for real.
+  get_kotak_client()    — Kotak Neo Trade API (neo_api_client / NeoAPI).
+                           Headless TOTP + MPIN login, fresh every trading
+                           day (the SDK keeps the resulting session tokens
+                           inside the client object itself — there's no
+                           portable access-token string to cache to disk
+                           the way Upstox's is, so we just re-login each
+                           run rather than half-caching one side of it).
+                           This is the ONLY client that ever places, cancels,
+                           or reads back real orders/positions.
 
-Install: pip install upstox-totp upstox-python-sdk
+  get_analytics_client() — Upstox's long-lived (1-year) Analytics Access
+                           Token, generated once by hand in the Upstox
+                           Developer Console and pasted into .env. Read-only,
+                           covers Market Data + Real-time/Streaming APIs.
+                           Used ONLY for prior-close/LTP pulls in
+                           live_engine.py — never for orders. Since it's a
+                           static long-lived token, there's no daily Upstox
+                           login step anymore (the old full TOTP login for
+                           order placement is gone along with the orders
+                           themselves).
+
+Install: pip install pyotp
+         pip install "git+https://github.com/Kotak-Neo/Kotak-neo-api-v2.git@v2.0.2#egg=neo_api_client"
 """
 
-import json
 import logging
 import os
 import time
 from configparser import ConfigParser
-from datetime import date
 
-import net_ipv4  # noqa: F401 — pins outbound calls to IPv4 for Upstox's static-IP whitelist
+import net_ipv4  # noqa: F401 — pins outbound calls to IPv4 (Upstox static-IP whitelist)
+import pyotp
 import upstox_client
-from upstox_totp import UpstoxTOTP
-from upstox_totp.models import AccessTokenData, AccessTokenResponse
+from neo_api_client import NeoAPI
 
 logger = logging.getLogger(__name__)
 
-# upstox-totp 1.0.8 (latest on PyPI) declares AccessTokenData.poa as a
-# required bool, but Upstox's live API response no longer includes "poa" —
-# validation fails with "data.poa Field required" on every login. Patch the
-# field to be optional until upstream fixes it. AccessTokenResponse is the
-# generic wrapper (ResponseBase[AccessTokenData]) and caches its own schema
-# snapshot at import time, so it must be rebuilt too or the patch won't
-# propagate to it.
-AccessTokenData.model_fields["poa"].default = None
-AccessTokenData.model_fields["poa"].annotation = bool | None
-AccessTokenData.model_rebuild(force=True)
-AccessTokenResponse.model_rebuild(force=True)
+
+def _cfg_or_env(cfg: ConfigParser, section: str, env_var: str, ini_key: str) -> str:
+    val = os.environ.get(env_var) or (cfg[section].get(ini_key, "") if cfg.has_section(section) else "")
+    return val or ""
 
 
-def _token_file_for(cfg: ConfigParser, mode: str) -> str:
-    """Sandbox and live tokens are cached separately so running one doesn't
-    clobber the other's cache (both may be in use in the same process)."""
-    base = cfg["PATHS"]["token_file"]
-    root, ext = os.path.splitext(base)
-    return f"{root}_{mode}{ext}"
-
-
-def get_client(cfg: ConfigParser, mode: str = None) -> tuple[upstox_client.ApiClient, str]:
+def get_kotak_client(cfg: ConfigParser) -> NeoAPI:
     """
-    Returns (ApiClient, access_token).
+    Fresh headless TOTP + MPIN login to Kotak Neo, every call. Returns a
+    logged-in NeoAPI client ready for place_order / cancel_order /
+    order_report / trade_report / positions.
 
-    mode: "sandbox" or "live" — overrides [SANDBOX] enabled in config.ini.
-    None (default) follows [SANDBOX] enabled as before.
+    Credentials (env var takes priority over config.ini's [KOTAK] section,
+    same pattern as the old Upstox login — env vars for cloud secrets,
+    config.ini values as local fallbacks only):
+        KOTAK_ACCESS_TOKEN    — the single token from Neo app's
+            More → Trade API → Create New Application (labelled "API
+            Access Token" / "Consumer Key" on screen — current Neo Trade
+            API onboarding issues just this one token, not a separate
+            key+secret pair). Passed to NeoAPI(access_token=...) — the
+            SDK also supports a consumer_key/consumer_secret constructor
+            for older app registrations, but isn't needed here.
+        KOTAK_MOBILE_NUMBER   — registered mobile, e.g. "+919999999999"
+        KOTAK_UCC             — your Kotak Neo client code
+        KOTAK_MPIN            — trading MPIN
+        KOTAK_TOTP_SECRET     — base32 TOTP secret from the same Trade API
+            page's separate "register for TOTP" step (NOT the 6-digit
+            code — the long base32 string), used to generate a fresh code
+            with pyotp on every login
 
-    The ApiClient is pre-configured and ready to pass to any Upstox API class.
+    Note: if Kotak enforces an expiry on the access token itself (the Trade
+    API page may show a validity/"Generate Access Token" control), a login
+    failure that specifically complains about the token/consumer key rather
+    than TOTP/MPIN means it needs regenerating from the app.
     """
-    sandbox = (mode == "sandbox") if mode is not None else \
-        cfg["SANDBOX"].getboolean("enabled", fallback=True)
-    token_file = _token_file_for(cfg, "sandbox" if sandbox else "live")
-    os.makedirs(os.path.dirname(token_file), exist_ok=True)
+    access_token = _cfg_or_env(cfg, "KOTAK", "KOTAK_ACCESS_TOKEN", "access_token")
+    mobile_number = _cfg_or_env(cfg, "KOTAK", "KOTAK_MOBILE_NUMBER", "mobile_number")
+    ucc = _cfg_or_env(cfg, "KOTAK", "KOTAK_UCC", "ucc")
+    mpin = _cfg_or_env(cfg, "KOTAK", "KOTAK_MPIN", "mpin")
+    totp_secret = _cfg_or_env(cfg, "KOTAK", "KOTAK_TOTP_SECRET", "totp_secret")
+    environment = cfg["KOTAK"].get("environment", "prod") if cfg.has_section("KOTAK") else "prod"
 
-    today        = date.today().isoformat()
-    access_token = None
+    missing = [name for name, val in [
+        ("KOTAK_ACCESS_TOKEN", access_token),
+        ("KOTAK_MOBILE_NUMBER", mobile_number), ("KOTAK_UCC", ucc),
+        ("KOTAK_MPIN", mpin), ("KOTAK_TOTP_SECRET", totp_secret),
+    ] if not val]
+    if missing:
+        raise RuntimeError(f"Kotak Neo login: missing {missing} — set as env var(s) or in "
+                            f"config.ini's [KOTAK] section.")
 
-    # ── Try cached token ─────────────────────────────────────────
-    if os.path.exists(token_file):
+    last_err = None
+    for attempt in range(1, 4):
         try:
-            with open(token_file) as f:
-                cache = json.load(f)
-            if cache.get("date") == today:
-                access_token = cache["access_token"]
-                logger.info("Using cached access_token from today")
+            client = NeoAPI(access_token=access_token, environment=environment)
+            totp_code = pyotp.TOTP(totp_secret).now()
+            login_resp = client.totp_login(mobile_number=mobile_number, ucc=ucc, totp=totp_code)
+            if isinstance(login_resp, dict) and str(login_resp.get("stat", "")).lower() not in ("ok", ""):
+                raise RuntimeError(f"totp_login failed: {login_resp}")
+
+            validate_resp = client.totp_validate(mpin=mpin)
+            if isinstance(validate_resp, dict) and str(validate_resp.get("stat", "")).lower() not in ("ok", ""):
+                raise RuntimeError(f"totp_validate failed: {validate_resp}")
+
+            logger.info(f"Kotak Neo login OK — ucc={ucc} environment={environment}")
+            return client
         except Exception as e:
-            logger.warning(f"Token cache read failed: {e}")
+            last_err = e
+            logger.error(f"Kotak Neo login attempt {attempt} failed: {e}")
+            if attempt < 3:
+                time.sleep(10)
 
-    # ── Fresh login if needed ────────────────────────────────────
-    if not access_token:
-        if sandbox:
-            # 1. Pull the manual token from env var or config
-            access_token = os.environ.get("UPSTOX_SANDBOX_TOKEN") or cfg["UPSTOX"].get("sandbox_token")
-            if not access_token:
-                raise RuntimeError("SANDBOX ENABLED: set UPSTOX_SANDBOX_TOKEN env var or add 'sandbox_token' in config.ini.")
-
-            # 2. Update the cache
-            with open(token_file, "w") as f:
-                json.dump({"date": today, "access_token": access_token}, f)
-
-            logger.info("Sandbox token applied and cached to disk")
-
-        else:
-            # LIVE MODE: Fresh TOTP login
-            logger.info("No valid cached token — performing fresh TOTP login for LIVE mode")
-
-            # upstox-totp reads credentials from env vars.
-            # Env vars take priority (cloud secrets); config.ini values are local fallbacks.
-            os.environ.setdefault("UPSTOX_USERNAME",     cfg["UPSTOX"].get("mobile", ""))
-            os.environ.setdefault("UPSTOX_PASSWORD",     cfg["UPSTOX"].get("pin", ""))
-            os.environ.setdefault("UPSTOX_PIN_CODE",     cfg["UPSTOX"].get("pin", ""))
-            os.environ.setdefault("UPSTOX_TOTP_SECRET",  cfg["UPSTOX"].get("totp_secret", ""))
-            os.environ.setdefault("UPSTOX_CLIENT_ID",    cfg["UPSTOX"].get("client_id", ""))
-            os.environ.setdefault("UPSTOX_CLIENT_SECRET",cfg["UPSTOX"].get("client_secret", ""))
-            os.environ.setdefault("UPSTOX_REDIRECT_URI", cfg["UPSTOX"].get("redirect_uri", ""))
-
-            for attempt in range(1, 4):
-                try:
-                    upx      = UpstoxTOTP()
-                    response = upx.app_token.get_access_token()
-                    if not response.success or not response.data:
-                        raise RuntimeError(f"upstox-totp returned failure: {response}")
-
-                    access_token = response.data.access_token
-                    logger.info(f"Logged in as {response.data.user_name} ({response.data.user_id})")
-                    break
-                except Exception as e:
-                    logger.error(f"Login attempt {attempt} failed: {e}")
-                    if attempt < 3:
-                        time.sleep(10)
-            else:
-                raise RuntimeError("All login attempts failed — check credentials in config.ini")
-
-            # Cache the live token
-            with open(token_file, "w") as f:
-                json.dump({"date": today, "access_token": access_token}, f)
-            logger.info("access_token cached to disk")
-
-    # ── Build ApiClient ──────────────────────────────────────────
-    configuration = upstox_client.Configuration(sandbox=sandbox)
-    configuration.access_token = access_token
-
-    if sandbox:
-        logger.info("★ SANDBOX MODE — no real orders will be placed ★")
-    else:
-        logger.info("★ LIVE MODE — real orders will be placed ★")
-
-    api_client = upstox_client.ApiClient(configuration)
-    return api_client, access_token
+    raise RuntimeError(f"All Kotak Neo login attempts failed — check KOTAK_* credentials. "
+                        f"Last error: {last_err}")
 
 
 def get_analytics_client(cfg: ConfigParser) -> upstox_client.ApiClient:
@@ -147,9 +122,9 @@ def get_analytics_client(cfg: ConfigParser) -> upstox_client.ApiClient:
     Access Token — no TOTP login involved, it's generated once by hand in
     the Upstox Developer Console and pasted into .env.
 
-    Covers Market Data and Real-time/Streaming APIs (and, once a static IP
-    is registered, Portfolio and Account & Funds read access). It cannot
-    place, modify, or cancel orders — use get_client() for that.
+    Covers Market Data and Real-time/Streaming APIs. Used exclusively for
+    prior-close / LTP pulls (live_engine.py) — Upstox is never involved in
+    order placement, which is entirely on Kotak Neo (see get_kotak_client).
     """
     token = os.environ.get("UPSTOX_ANALYTICS_TOKEN") or cfg["UPSTOX"].get("analytics_token")
     if not token:
