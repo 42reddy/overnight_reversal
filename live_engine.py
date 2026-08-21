@@ -33,6 +33,13 @@ logger = logging.getLogger(__name__)
 
 API_VERSION = "2.0"
 
+# The underlying upstox_client REST layer defaults to NO request timeout
+# (waits forever) unless one is passed explicitly. fetch_prev_closes() makes
+# one HTTP call per ticker, sequentially — without this, a single stalled
+# connection anywhere in ~300+ calls hangs the entire prep pass indefinitely,
+# with no error and no way to tell it apart from just being slow.
+REQUEST_TIMEOUT_S = 15
+
 
 class SignalEngine:
     def __init__(self, cfg, api_client: upstox_client.ApiClient, instruments: dict = None):
@@ -72,7 +79,7 @@ class SignalEngine:
             try:
                 resp = self.history_api.get_historical_candle_data(
                     instrument_key=key, interval="day", to_date=to_date,
-                    api_version=API_VERSION,
+                    api_version=API_VERSION, _request_timeout=REQUEST_TIMEOUT_S,
                 )
                 candles = resp.data.candles if resp.data else []
                 if not candles:
@@ -105,7 +112,8 @@ class SignalEngine:
         logger.info(f"Fetching open prices (LTP) for {len(keys)} ticker(s)...")
         ltp = {}
         try:
-            resp = self.quote_api.ltp(symbol=",".join(keys), api_version=API_VERSION)
+            resp = self.quote_api.ltp(symbol=",".join(keys), api_version=API_VERSION,
+                                       _request_timeout=REQUEST_TIMEOUT_S)
             for entry in (resp.data or {}).values():
                 ticker = key_to_ticker.get(entry.instrument_token)
                 if ticker:
@@ -113,6 +121,13 @@ class SignalEngine:
             logger.info(f"Fetched open prices for {len(ltp)}/{len(keys)} ticker(s)")
         except ApiException as e:
             logger.error(f"Bulk LTP fetch failed: status={e.status} body={e.body}")
+        except Exception as e:
+            # A timed-out connection surfaces as a raw urllib3/socket exception,
+            # not an ApiException — without this, it would propagate uncaught
+            # out of build_signals() and crash the entry pass instead of just
+            # skipping today's entries gracefully (see run_entry_pass's
+            # "no signals available" branch).
+            logger.error(f"Bulk LTP fetch error: {e}")
         return ltp
 
     def build_signals(self) -> list:

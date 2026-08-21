@@ -82,12 +82,24 @@ def load_config(path: str = "config.ini") -> ConfigParser:
 
 
 def setup_logging(log_file: str):
+    """
+    force=True is load-bearing: importing neo_api_client (via execution.py /
+    auth.py, both imported above before this ever runs) has the side effect
+    of calling its own logging.basicConfig-equivalent at import time —
+    attaching a WARNING-level JSON handler straight to the root logger.
+    Without force=True, this basicConfig call is a silent no-op (stdlib
+    basicConfig refuses to touch a root logger that already has handlers),
+    which drops every INFO-level log in the whole bot (login OK, prep
+    progress, wake/sleep messages, ...) and never attaches logs/bot.log at
+    all — the bot keeps running, it just goes invisible.
+    """
     os.makedirs(os.path.dirname(log_file), exist_ok=True)
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s  %(levelname)-8s  %(name)s  %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
         handlers=[logging.FileHandler(log_file), logging.StreamHandler(sys.stdout)],
+        force=True,
     )
 
 
