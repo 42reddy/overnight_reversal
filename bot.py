@@ -103,6 +103,11 @@ def _parse_hhmm(s: str) -> dt_time:
     return dt_time(h, m)
 
 
+def _fmt_ampm(dt: datetime) -> str:
+    """e.g. 8:45am — used in wake/sleep log lines instead of 24h HH:MM."""
+    return dt.strftime("%I:%M%p").lstrip("0").lower()
+
+
 def _prompt_capital(default: float) -> float:
     """Interactive prompt when run from a real terminal; falls back to
     BOT_CAPITAL env var or config default under cron/systemd (no TTY),
@@ -135,9 +140,9 @@ def wait_until(target: dt_time, label: str):
     target_dt = now.replace(hour=target.hour, minute=target.minute, second=0, microsecond=0)
     remaining = (target_dt - now).total_seconds()
     if remaining <= 0:
-        logger.info(f"{label} ({target.strftime('%H:%M')}) already passed — continuing immediately")
+        logger.info(f"{label} ({_fmt_ampm(target_dt)}) already passed — continuing immediately")
         return
-    logger.info(f"Waiting until {label} ({target.strftime('%H:%M')} IST, "
+    logger.info(f"Waiting until {label} ({_fmt_ampm(target_dt)} IST, "
                f"~{remaining / 60:.1f} min)...")
     while remaining > 0:
         time_module.sleep(min(remaining, 5.0))
@@ -233,8 +238,9 @@ def _sleep_until(target_dt: datetime, shutdown: threading.Event, chunk_s: float 
         if remaining <= 0:
             return
         if not logged_eta:
-            logger.info(f"Sleeping until {target_dt.strftime('%Y-%m-%d %H:%M %Z')} "
-                       f"(~{remaining / 3600:.1f}h away)")
+            logger.info(f"Next wake-up at {_fmt_ampm(target_dt)} on "
+                       f"{target_dt.strftime('%Y-%m-%d')}, ~{remaining / 3600:.2f} "
+                       f"hours away")
             logged_eta = True
         shutdown.wait(min(remaining, chunk_s))
 
@@ -565,7 +571,7 @@ def run_forever(cfg: ConfigParser):
         reason = "weekend" if now.weekday() >= 5 else (
             "holiday" if now.date() in holidays else "after today's exit deadline"
         )
-        logger.info(f"No trading to do right now ({reason}) — next prep window {target.date()}")
+        logger.info(f"No trading to do right now ({reason})")
         _sleep_until(target, shutdown)
 
     logger.info("Shutdown complete.")

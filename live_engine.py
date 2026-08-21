@@ -64,6 +64,7 @@ class SignalEngine:
         import datetime as dt
         to_date = dt.date.today().isoformat()
 
+        logger.info(f"Fetching previous close prices for {len(tickers)} ticker(s)...")
         prev_close = {}
         failed = []
         for ticker in tickers:
@@ -88,7 +89,7 @@ class SignalEngine:
                 failed.append(ticker)
 
         self.prev_close = prev_close
-        logger.info(f"Prior-close resolved for {len(prev_close)}/{len(tickers)} tickers"
+        logger.info(f"Fetched previous close prices for {len(prev_close)}/{len(tickers)} ticker(s)"
                     + (f"; failed: {failed}" if failed else ""))
         return prev_close
 
@@ -101,6 +102,7 @@ class SignalEngine:
         if not keys:
             return {}
 
+        logger.info(f"Fetching open prices (LTP) for {len(keys)} ticker(s)...")
         ltp = {}
         try:
             resp = self.quote_api.ltp(symbol=",".join(keys), api_version=API_VERSION)
@@ -108,6 +110,7 @@ class SignalEngine:
                 ticker = key_to_ticker.get(entry.instrument_token)
                 if ticker:
                     ltp[ticker] = float(entry.last_price)
+            logger.info(f"Fetched open prices for {len(ltp)}/{len(keys)} ticker(s)")
         except ApiException as e:
             logger.error(f"Bulk LTP fetch failed: status={e.status} body={e.body}")
         return ltp
