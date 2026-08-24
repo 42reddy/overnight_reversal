@@ -25,7 +25,7 @@ Two independent brokers, two independent auth flows:
                            themselves).
 
 Install: pip install pyotp
-         pip install "git+https://github.com/Kotak-Neo/Kotak-neo-api-v2.git@v2.0.2#egg=neo_api_client"
+         pip install kotakneoapi   # PyPI package; still importable as neo_api_client
 """
 
 import logging
@@ -97,11 +97,21 @@ def get_kotak_client(cfg: ConfigParser) -> NeoAPI:
             client = NeoAPI(access_token=access_token, environment=environment)
             totp_code = pyotp.TOTP(totp_secret).now()
             login_resp = client.totp_login(mobile_number=mobile_number, ucc=ucc, totp=totp_code)
-            if isinstance(login_resp, dict) and str(login_resp.get("stat", "")).lower() not in ("ok", ""):
+            # totp_login/totp_validate never carry a top-level "stat" key — the SDK
+            # (neo_api_client/services/totp.py) only sets view_token/sid (login) or
+            # edit_token/edit_sid (validate) when the response's "data" dict is
+            # present; any failure (bad UCC/TOTP/MPIN, rate limit, etc.) leaves them
+            # unset and returns an error payload of a different shape instead. A
+            # missing edit_token/edit_sid here means every later place_order/
+            # positions/order_report call will silently no-op with
+            # {"Error Message": "Complete the 2fa process before accessing this
+            # application"} — no network call, no obvious failure at login time —
+            # so check the tokens directly rather than a "stat" field that doesn't exist.
+            if not client.configuration.view_token or not client.configuration.sid:
                 raise RuntimeError(f"totp_login failed: {login_resp}")
 
             validate_resp = client.totp_validate(mpin=mpin)
-            if isinstance(validate_resp, dict) and str(validate_resp.get("stat", "")).lower() not in ("ok", ""):
+            if not client.configuration.edit_token or not client.configuration.edit_sid:
                 raise RuntimeError(f"totp_validate failed: {validate_resp}")
 
             logger.info(f"Kotak Neo login OK — ucc={ucc} environment={environment}")

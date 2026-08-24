@@ -185,6 +185,14 @@ class Executor:
                          f"CHECK THE KOTAK NEO ORDER BOOK MANUALLY for {ticker} "
                          f"{transaction} {qty} (MARKET). Raw response: {resp!r}")
             return None
+        if resp.get("Error Message"):
+            # The SDK returns this client-side, with no network call at all, whenever
+            # configuration.edit_token/edit_sid are unset — i.e. the session never
+            # actually completed 2FA. No order was sent to Kotak; nothing to check
+            # in the order book. See auth.py get_kotak_client for the real fix.
+            logger.error(f"{label} NEVER SENT — Kotak session is not authenticated "
+                         f"(2FA incomplete): {ticker} {transaction} {qty} response={resp}")
+            return None
         if str(resp.get("stat", "")).lower() not in ("ok", ""):
             logger.error(f"{label} FAILED: {ticker} {transaction} {qty} response={resp}")
             return None
