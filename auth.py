@@ -59,9 +59,13 @@ def get_kotak_client(cfg: ConfigParser) -> NeoAPI:
             More → Trade API → Create New Application (labelled "API
             Access Token" / "Consumer Key" on screen — current Neo Trade
             API onboarding issues just this one token, not a separate
-            key+secret pair). Passed to NeoAPI(access_token=...) — the
-            SDK also supports a consumer_key/consumer_secret constructor
-            for older app registrations, but isn't needed here.
+            key+secret pair). Passed to NeoAPI(consumer_key=...) — that's
+            what the SDK puts in the Authorization header for totp_login/
+            totp_validate. NeoAPI's own `access_token` constructor param
+            means something different (a pre-authenticated token that
+            skips the TOTP flow entirely) and must NOT be used here, or
+            the Authorization header ends up empty and Kotak's API
+            rejects totp_login with "Missing required field 'Authorization'".
         KOTAK_MOBILE_NUMBER   — registered mobile, e.g. "+919999999999"
         KOTAK_UCC             — your Kotak Neo client code
         KOTAK_MPIN            — trading MPIN
@@ -94,7 +98,7 @@ def get_kotak_client(cfg: ConfigParser) -> NeoAPI:
     last_err = None
     for attempt in range(1, 4):
         try:
-            client = NeoAPI(access_token=access_token, environment=environment)
+            client = NeoAPI(consumer_key=access_token, environment=environment)
             totp_code = pyotp.TOTP(totp_secret).now()
             login_resp = client.totp_login(mobile_number=mobile_number, ucc=ucc, totp=totp_code)
             # totp_login/totp_validate never carry a top-level "stat" key — the SDK
