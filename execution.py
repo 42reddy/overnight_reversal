@@ -5,13 +5,19 @@ Same three passes a day as before, now routed through Kotak Neo's Trade API
 (neo_api_client / NeoAPI) instead of Upstox — Upstox is no longer involved in
 trading at all, only in market data (see live_engine.py / auth.py).
 
-  1. ENTRY (~09:15): one MARKET order per sized position, both legs on the
+  1. ENTRY (~09:15): one LIMIT order per sized position, both legs on the
      same intraday product (config STRATEGY.long_product/short_product,
      default MIS — cash-segment intraday, no MTF financing on either leg
-     since nothing is held overnight).
+     since nothing is held overnight). The limit price is a "marketable"
+     limit a small buffer (STRATEGY.entry_limit_buffer_bps) through the
+     signal price — buy limit above, sell limit below — so a thin name
+     can't blow through an unbounded MARKET-order price on the open; an
+     entry that doesn't fill within the buffer is left for the cancel pass
+     rather than chased.
 
   2. CANCEL UNFILLED (~09:20): safety net for any entry that comes back
-     open/pending — MARKET orders normally resolve immediately.
+     open/pending — now a real possibility (not just a rare race) since
+     LIMIT orders aren't guaranteed to fill the way MARKET orders were.
 
   3. EXIT (~15:00): MARKET orders closing out whatever Kotak's live position
      book actually shows open — reconciled against get_net_positions(), NOT
@@ -37,10 +43,12 @@ terminal-status spelling not listed here, add it.
 DRY-RUN (config.ini [SANDBOX] enabled=true): Kotak has no public retail
 paper-trading environment the way Upstox's sandbox was, so "sandbox" here
 means a purely local simulation — no network calls to Kotak at all. Entries
-fill instantly at the signal price; exits fill at that same recorded price
-(so simulated day PnL is always ~0 by construction). It exercises the full
-mechanics — login, signals, sizing, state/log bookkeeping, timing — without
-ever touching a real account. It is NOT a broker-side fill/slippage test.
+fill instantly at the computed limit price; exits fill at that same
+recorded price (so simulated day PnL is always ~0 by construction). It
+exercises the full mechanics — login, signals, sizing, state/log
+bookkeeping, timing — without ever touching a real account. It is NOT a
+broker-side fill/slippage test, and it can't exercise the "limit order
+doesn't fill" path the way live trading can (see run_cancel_pass).
 """
 
 import logging
@@ -99,12 +107,23 @@ def _ticker_from_trading_symbol(trading_symbol: str) -> str:
     return trading_symbol[:-3] if trading_symbol.endswith("-EQ") else trading_symbol
 
 
+def _round_to_tick(price: float, tick: float = 0.05) -> float:
+    """NSE cash-equity tick size is Rs 0.05 for the overwhelming majority of
+    listed equities — snap the computed limit price to a valid tick so the
+    exchange doesn't reject the order for an invalid price increment. (A
+    handful of very low-priced/illiquid names can carry a different tick
+    size; not handled here since instrument_master.py doesn't resolve tick
+    size today — if you trade such a name, verify its tick manually.)"""
+    return round(round(price / tick) * tick, 2)
+
+
 class Executor:
     def __init__(self, client: NeoAPI, cfg: ConfigParser):
         self.client = client
         s = cfg["STRATEGY"]
         self.long_product = s.get("long_product", "MIS")
         self.short_product = s.get("short_product", "MIS")
+        self.entry_limit_buffer_bps = float(s.get("entry_limit_buffer_bps", 15.0))
         self.dry_run = cfg["SANDBOX"].getboolean("enabled", fallback=True)
 
         # dry-run only: local simulated broker state
@@ -116,10 +135,16 @@ class Executor:
 
     def place_entry(self, position: dict) -> tuple:
         """
-        Place one MARKET entry order for a sized position dict (from
+        Place one LIMIT entry order for a sized position dict (from
         sizing.PositionSizer): {ticker, instrument_key, direction, qty, price}.
 
-        Returns (order_id, signal_price) — order_id is None if the order
+        Limit price = signal price bumped by entry_limit_buffer_bps in the
+        marketable direction (up for a buy, down for a sell), rounded to a
+        valid NSE tick — a small, bounded concession to get filled without
+        exposing the order to an unbounded MARKET-order price on a thin
+        name at the open.
+
+        Returns (order_id, limit_price) — order_id is None if the order
         was rejected outright.
         """
         ticker = position["ticker"]
@@ -129,22 +154,26 @@ class Executor:
         signal_price = position["price"]
         qty = position["qty"]
 
+        buffer_frac = self.entry_limit_buffer_bps / 10_000.0
+        raw_limit = signal_price * (1 + buffer_frac if direction == "long" else 1 - buffer_frac)
+        limit_price = _round_to_tick(raw_limit)
+
         if self.dry_run:
             order_id = f"SIM-{ticker}-ENTRY-{int(time.time() * 1000)}"
-            self._sim_orders[order_id] = OrderSnapshot(order_id, "complete", qty, signal_price)
+            self._sim_orders[order_id] = OrderSnapshot(order_id, "complete", qty, limit_price)
             signed = qty if direction == "long" else -qty
             self._sim_positions[ticker] = self._sim_positions.get(ticker, 0) + signed
-            self._sim_entry_price[ticker] = signal_price
-            logger.info(f"[DRY-RUN] ENTRY simulated: {ticker} {transaction} {qty} (MKT) "
-                        f"product={product} order_id={order_id}")
-            return order_id, signal_price
+            self._sim_entry_price[ticker] = limit_price
+            logger.info(f"[DRY-RUN] ENTRY simulated: {ticker} {transaction} {qty} "
+                        f"(LMT {limit_price}) product={product} order_id={order_id}")
+            return order_id, limit_price
 
         try:
             resp = self.client.place_order(
                 exchange_segment=EXCHANGE_SEGMENT,
                 product=product,
-                price="0",
-                order_type="MKT",
+                price=str(limit_price),
+                order_type="L",
                 quantity=str(qty),
                 validity="DAY",
                 trading_symbol=_trading_symbol(ticker),
@@ -155,15 +184,15 @@ class Executor:
             )
         except Exception as e:
             logger.error(f"ENTRY FAILED: {ticker} {transaction} {qty} error={e}")
-            return None, signal_price
+            return None, limit_price
 
         order_id = self._extract_order_id(resp, ticker, transaction, qty, "ENTRY")
         if order_id is None:
-            return None, signal_price
+            return None, limit_price
 
-        logger.info(f"ENTRY placed: {ticker} {transaction} {qty} (MKT) "
+        logger.info(f"ENTRY placed: {ticker} {transaction} {qty} (LMT {limit_price}) "
                     f"product={product} order_id={order_id}")
-        return order_id, signal_price
+        return order_id, limit_price
 
     def place_entries(self, positions: list) -> dict:
         """Fire one entry order per position, back-to-back. Returns

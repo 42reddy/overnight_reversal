@@ -179,7 +179,7 @@ with tab_today:
     with c2:
         if st.button("2. Run entry", disabled=_action_disabled(),
                      help="Ranks the universe on this morning's LTP vs prior close, "
-                          "sizes the basket, and fires MARKET entry orders."):
+                          "sizes the basket, and fires LIMIT entry orders."):
             with st.spinner("Placing entries..."):
                 try:
                     bot.run_entry_pass()

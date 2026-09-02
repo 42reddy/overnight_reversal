@@ -14,3 +14,8 @@ requests>=2.31.0
 python-dotenv>=1.0.0
 streamlit>=1.36.0
 plotly>=5.20.0
+
+# market_cap.py only — periodic offline refresh of instruments.json's
+# market_cap field (used to weight the demeaning mean in live_engine.py).
+# Not used anywhere in the live trading path itself.
+yfinance>=0.2.40

@@ -19,14 +19,15 @@ One trading day looks like:
   1. Login, refresh instrument tokens, fetch every universe name's prior
      close (idle time before the open — this is the slow part, so it's
      done before 09:15, not during the entry sprint).
-  2. At 09:15: pull one bulk LTP snapshot, rank the universe by overnight
-     return, size the basket (capital split into n_splits equal slots,
-     leveraged flat at STRATEGY.intraday_leverage on both legs, rounded
-     down to whole shares, backfilling from the next-ranked candidate if
-     one can't be sized), and fire one MARKET entry order per name — longs
-     on the biggest losers, shorts on the biggest winners.
-  3. At 09:20: cancel anything still open (safety net; MARKET orders
-     normally resolve immediately).
+  2. At 09:15: pull one bulk LTP snapshot, rank the universe by
+     cross-sectionally demeaned overnight return, size the basket (capital
+     split into n_splits equal slots, leveraged flat at
+     STRATEGY.intraday_leverage on both legs, rounded down to whole
+     shares, backfilling from the next-ranked candidate if one can't be
+     sized), and fire one LIMIT entry order per name — longs on the
+     biggest losers, shorts on the biggest winners.
+  3. At 09:20: cancel anything still open (a real backstop now — LIMIT
+     orders aren't guaranteed to fill the way MARKET orders were).
   4. At 15:00: reconcile against the broker's live position book (so a
      position closed/resized manually outside the bot is respected, not
      blindly re-exited into a reversed position) and MARKET-order out of
