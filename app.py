@@ -22,9 +22,15 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from bot import ReversalBot, load_config, setup_logging, _parse_hhmm, IST, _load_env
+from bot import ReversalBot, load_config, setup_logging, _parse_hhmm, IST, _load_env, _ignore_terminal_hangup
 from state import BasketState
 from trade_log import TradeLogger
+
+# If `streamlit run app.py` is itself launched inside tmux/screen/SSH, a
+# dropped terminal sends SIGHUP to this same process — same failure mode as
+# bot.py, see _ignore_terminal_hangup's docstring. Safe to call on every
+# Streamlit rerun (idempotent).
+_ignore_terminal_hangup()
 
 # ── Palette (validated diverging/status colors — see dataviz skill) ────────
 GOOD_TEXT = "#0ca30c"      # status: good (mode-invariant)

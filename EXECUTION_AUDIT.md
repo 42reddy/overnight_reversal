@@ -228,6 +228,77 @@ capital/timing gaps in items 4-6 above).
   rather than a capability that silently falls back to equal-weighting
   every day for lack of data. Re-run it every few weeks to keep it fresh.
 
+## Addendum (2026-09-03) — process crash during the entry pass
+
+Reported: the tmux session running the bot crashed and closed right as
+entry orders needed to be placed.
+
+**Root cause**: `bot.py` never handled `SIGHUP`. A dropped SSH connection,
+a crashed/closed tmux (or screen) session, or a closed terminal window all
+send `SIGHUP` to whatever process is attached to that controlling
+terminal. Python's default disposition for `SIGHUP` is immediate process
+termination — no exception is raised, nothing in the code gets a chance
+to catch it or clean up, and it can land at any instruction, including
+mid-way through the entry loop. This matches the report exactly: the
+process was killed by the OS itself, not by a bug in the trading logic
+throwing an exception.
+
+**Fix**: `bot.py` (and `app.py`, since `streamlit run app.py` is the same
+kind of terminal-attached process) now calls `_ignore_terminal_hangup()`
+at startup, which sets `SIGHUP` to `SIG_IGN`. A terminal disappearing can
+no longer kill the process — functionally the same protection `nohup`
+gives, but built into the process itself rather than depending on the
+operator remembering to launch it that way. **This is a floor, not a
+substitute** for real deployment hygiene: for a VPS, actually run under
+`nohup ... & disown`, a detached (not closed) tmux/screen session, or —
+better — a systemd service with `Restart=on-failure`, so the process is
+fully independent of any terminal from the start and comes back on its
+own after a crash or reboot, which ignoring one signal can't provide.
+
+**Second, more dangerous gap this surfaced**: even before SIGHUP, ANY
+crash mid-entry-loop (OOM kill, `kill -9`, power loss, this SIGHUP) could
+leave an order that reached Kotak with no local record of it — a real
+live position at the broker that both `cancel_unfilled` (no
+`entry_order_id` on file) and the exit pass's per-ticker walk (never in
+`state.positions`, or stuck at `entry_status="pending"` forever) would be
+structurally blind to. It would never get flattened by the bot at all,
+left entirely to the broker's own MIS auto-square-off as the only
+backstop.
+
+**Fix**: `run_exit_pass()` now also sweeps Kotak's live position book
+(`get_net_positions()`) for any ticker with a nonzero position not
+already accounted for by known state, and flattens those too as "orphan"
+exits — loudly logged (`ORPHAN live position found...`) since there's no
+`signal_price`/`entry_fill_price` on file to reconcile PnL against, but
+flattened all the same rather than left open. This sweep now runs
+unconditionally (previously the function returned early if local state
+had zero known open positions, which would have skipped even checking the
+broker in the pathological case where literally everything the bot
+thought it knew was wrong). Verified with a synthetic test: a position
+entirely absent from local state, with only a live broker-side quantity,
+is now correctly discovered, flattened, and backfilled into
+state/trade_log for the record.
+
+**Also hardened**: `run_entry_pass()`'s per-name loop now catches
+unexpected exceptions per-iteration (bookkeeping/disk-write errors, not
+broker/network errors — `place_entry()` already handled those
+internally) so one name's failure can't abort the rest of that morning's
+basket. If that name's order actually reached the broker before the
+failure, the new orphan sweep above will still find and flatten it later
+even without a clean local record.
+
+**Not done**: order placement in the entry loop is still sequential (one
+network round-trip per name, back-to-back), which is a real if modest
+source of return decay for later-ranked names in a large basket (see item
+6 above) and was tempting to parallelize while in this code. Deliberately
+left alone — thread-safety of the underlying `neo_api_client` session
+under concurrent `place_order()` calls isn't documented/confirmed, and
+`state.py`'s JSON read-modify-write isn't thread-safe either; getting
+this wrong risks duplicate/dropped live orders or corrupted state, which
+is a worse failure mode than a few seconds of timing dispersion. Only
+worth revisiting with confirmed thread-safety guarantees from Kotak's SDK
+docs/support.
+
 ## Net expectation after these fixes
 
 Two of the three fixed items (demeaning, data-error guard) affect *which*

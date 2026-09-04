@@ -335,19 +335,35 @@ class ReversalBot:
             return
 
         for pos in sized:
-            self.state.add_planned_position(
-                pos["ticker"], pos["instrument_key"], pos["direction"],
-                pos["qty"], pos["price"],
-            )
-            order_id, limit_price = self.executor.place_entry(pos)
-            self.state.record_entry_order(pos["ticker"], order_id, limit_price)
-            self.trade_log.log_entry_order(
-                pos["ticker"], pos["direction"], pos["qty"], pos["leverage"],
-                pos["price"], limit_price, order_id,
-            )
-            if order_id is None:
-                self.state.record_entry_result(pos["ticker"], "rejected")
-                self.trade_log.log_entry_result(pos["ticker"], "rejected", 0, None)
+            ticker = pos["ticker"]
+            try:
+                self.state.add_planned_position(
+                    ticker, pos["instrument_key"], pos["direction"],
+                    pos["qty"], pos["price"],
+                )
+                order_id, limit_price = self.executor.place_entry(pos)
+                self.state.record_entry_order(ticker, order_id, limit_price)
+                self.trade_log.log_entry_order(
+                    ticker, pos["direction"], pos["qty"], pos["leverage"],
+                    pos["price"], limit_price, order_id,
+                )
+                if order_id is None:
+                    self.state.record_entry_result(ticker, "rejected")
+                    self.trade_log.log_entry_result(ticker, "rejected", 0, None)
+            except Exception:
+                # One name's bookkeeping hiccup (e.g. a transient disk-write
+                # error) must not abort the rest of the basket — place_entry()
+                # itself already catches broker/network failures internally,
+                # so anything reaching here is unexpected and needs a human
+                # look, but the other n_long+n_short-1 names still deserve
+                # their entry attempt. If the order actually reached the
+                # broker before this failed, run_exit_pass's orphan-position
+                # sweep will still find and flatten it later even without a
+                # clean local record.
+                logger.exception(f"{ticker}: entry pass hit an unexpected error — "
+                                  f"skipping this name, continuing with the rest of "
+                                  f"the basket. CHECK THE KOTAK NEO ORDER BOOK "
+                                  f"MANUALLY for {ticker}.")
 
     # ── Cancel unfilled (~09:20) ────────────────────────────────────
 
@@ -399,17 +415,16 @@ class ReversalBot:
             if p["entry_status"] in ("filled", "partial") and p["entry_filled_qty"] > 0
             and t not in already_exited
         ]
-        if not open_positions:
-            logger.info("No filled positions to exit.")
-            return
 
         # Reconcile against the broker's actual live position book before
-        # placing anything. The bot's own state only knows what IT filled at
-        # entry — if a position was closed (or resized) manually outside the
-        # bot, blindly firing an exit sized off entry_filled_qty in the
-        # entry's direction doesn't flatten anything: it OPENS A NEW POSITION
-        # in the opposite direction on top of whatever's actually there.
-        # Sizing and direction both come from the live net quantity instead.
+        # placing anything (and even if open_positions is empty — see the
+        # orphan sweep below). The bot's own state only knows what IT
+        # filled at entry — if a position was closed (or resized) manually
+        # outside the bot, blindly firing an exit sized off
+        # entry_filled_qty in the entry's direction doesn't flatten
+        # anything: it OPENS A NEW POSITION in the opposite direction on
+        # top of whatever's actually there. Sizing and direction both come
+        # from the live net quantity instead.
         net_positions = self.executor.get_net_positions()
 
         to_exit = []
@@ -441,6 +456,43 @@ class ReversalBot:
                 )
 
             to_exit.append(dict(p, exit_qty=qty, exit_transaction=transaction))
+
+        # Safety net: sweep the broker's live position book for any ticker
+        # with a nonzero position NOT covered by the walk above. This
+        # catches a position that filled at the broker but whose order_id/
+        # status never made it into local state — e.g. the process was
+        # killed (crash, SIGHUP from a dropped terminal, OOM, ...) in the
+        # narrow window between Kotak accepting the order and
+        # state.record_entry_order() running. Such a ticker sits at
+        # entry_status="pending" forever (see add_planned_position, which
+        # runs — and saves to disk — BEFORE place_entry() each iteration),
+        # so it's invisible to both cancel_unfilled (no entry_order_id on
+        # file) and the per-ticker walk above (entry_filled_qty stays 0).
+        # Without this sweep such a position would never get flattened by
+        # the bot at all and would be left to the broker's own MIS
+        # auto-square-off as the only backstop.
+        known_tickers = {p["ticker"] for p in open_positions} | already_exited
+        orphans = {t: q for t, q in net_positions.items() if q != 0 and t not in known_tickers}
+        for ticker, actual_qty in orphans.items():
+            direction = "long" if actual_qty > 0 else "short"
+            qty = abs(actual_qty)
+            transaction = "SELL" if actual_qty > 0 else "BUY"
+            logger.error(
+                f"{ticker}: ORPHAN live position found at the broker ({direction} {qty}) "
+                f"with no matching open position in local state — likely a crash between "
+                f"order placement and bookkeeping. Flattening it now; reconcile this leg's "
+                f"entry price/PnL manually against the Kotak Neo order book (none on file)."
+            )
+            info = self.instruments.get(ticker, {})
+            if ticker not in self.state.positions:
+                self.state.add_planned_position(ticker, info.get("instrument_key"), direction, qty, None)
+            self.state.record_entry_result(ticker, "filled", qty, None)
+            self.trade_log.log_entry_order(ticker, direction, qty, None, None, None, None)
+            self.trade_log.log_entry_result(ticker, "filled", qty, None)
+            to_exit.append({
+                "ticker": ticker, "instrument_key": info.get("instrument_key"),
+                "direction": direction, "exit_qty": qty, "exit_transaction": transaction,
+            })
 
         if not to_exit:
             logger.info("Nothing left to exit — every open position was already flat "
@@ -594,7 +646,34 @@ def run_forever(cfg: ConfigParser):
 # MAIN
 # ══════════════════════════════════════════════════════════════════════════════
 
+def _ignore_terminal_hangup():
+    """
+    SIGHUP is sent to every process attached to a controlling terminal when
+    that terminal goes away — a dropped SSH connection, a crashed/closed
+    tmux or screen session, a closed terminal window. Python's default
+    disposition for SIGHUP is immediate termination: no exception is
+    raised, nothing in the code gets a chance to catch it, and it can fire
+    at any point — including mid-entry-loop, after an order has already
+    reached the broker but before state.record_entry_order() has saved
+    that order_id to disk (see run_exit_pass's orphan-position sweep for
+    the safety net covering that specific case).
+
+    Ignoring SIGHUP here makes the bot behave as if it were always started
+    under `nohup` — a terminal disappearing no longer kills it — WITHOUT
+    depending on the operator remembering to launch it that way. This is
+    a floor, not a substitute for a real deployment: for a VPS, prefer
+    actually running under `nohup ... & disown`, screen/tmux detached
+    (not just closed), or a systemd service (see README.md) so the
+    process is fully independent of any terminal from the start, survives
+    a `kill` of the parent shell, and restarts automatically on a crash or
+    reboot.
+    """
+    if hasattr(signal, "SIGHUP"):
+        signal.signal(signal.SIGHUP, signal.SIG_IGN)
+
+
 def main():
+    _ignore_terminal_hangup()
     _load_env()
     cfg = load_config()
     setup_logging(cfg["PATHS"]["log_file"])

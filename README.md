@@ -109,6 +109,16 @@ For persistent deployment on a VPS:
 nohup python bot.py >> logs/bot.log 2>&1 &
 ```
 
+`bot.py` also ignores `SIGHUP` on its own (see `_ignore_terminal_hangup`
+in `bot.py`), so a dropped SSH connection or a crashed/closed tmux/screen
+session can no longer kill it even if you forget `nohup` — but treat that
+as a floor, not a substitute: `nohup`/a detached tmux/screen session/
+systemd fully detaches the process from any terminal from the start, and
+only systemd (or another supervisor) restarts it automatically if it dies
+for some other reason (OOM, `kill -9`, a host reboot). Prefer running it
+under a systemd service with `Restart=on-failure` for anything you're not
+watching live.
+
 Add to crontab for auto-start on reboot:
 ```
 @reboot sleep 30 && cd ~/overnight_reversal && source ~/venv/bin/activate && nohup python bot.py >> logs/bot.log 2>&1 &
