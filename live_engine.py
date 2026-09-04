@@ -33,6 +33,7 @@ Two-step, matched to the trading day:
 """
 
 import logging
+import time
 
 import upstox_client
 from upstox_client.rest import ApiException
@@ -72,11 +73,25 @@ class SignalEngine:
 
     # ── Step 1: prior close (once per day, cacheable) ──────────────
 
-    def fetch_prev_closes(self) -> dict:
+    def fetch_prev_closes(self, max_seconds: float = None) -> dict:
         """
         Populate self.prev_close for every tradeable ticker with the last
         completed session's close. Names that fail to resolve are dropped
         from today's universe (logged, not fatal to the whole run).
+
+        max_seconds: hard wall-clock budget for the whole loop (not per
+        ticker — REQUEST_TIMEOUT_S already bounds that). This is a
+        sequential, one-call-per-ticker loop over ~300+ names, run during
+        the narrow pre-market prep window (see bot.py's TIMING.prep_start /
+        market_open) — a run of slow/timed-out tickers on a rough network
+        morning could otherwise eat into or past market_open, which cuts
+        directly into (or eliminates) the entry window. Once the budget is
+        spent, remaining tickers are dropped for today exactly like an
+        individual fetch failure (loud warning, not fatal) rather than
+        risking the whole day's entries over prior-close data for names
+        not yet reached. bot.py passes the actual seconds remaining until
+        market_open; left None (e.g. for standalone/manual runs) this is
+        unbounded, same as before.
         """
         tickers = self._tradeable_tickers()
         import datetime as dt
@@ -85,7 +100,18 @@ class SignalEngine:
         logger.info(f"Fetching previous close prices for {len(tickers)} ticker(s)...")
         prev_close = {}
         failed = []
-        for ticker in tickers:
+        start = time.monotonic()
+        for i, ticker in enumerate(tickers):
+            if max_seconds is not None and (time.monotonic() - start) > max_seconds:
+                skipped = tickers[i:]
+                logger.error(
+                    f"fetch_prev_closes: {max_seconds:.0f}s prep budget exhausted with "
+                    f"{len(skipped)}/{len(tickers)} ticker(s) not yet attempted — dropping "
+                    f"them for today rather than risk running past market open: {skipped[:10]}"
+                    + (" ..." if len(skipped) > 10 else "")
+                )
+                failed.extend(skipped)
+                break
             key = self.instruments[ticker]["instrument_key"]
             try:
                 resp = self.history_api.get_historical_candle_data(

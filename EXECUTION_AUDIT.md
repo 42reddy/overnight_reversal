@@ -299,6 +299,53 @@ is a worse failure mode than a few seconds of timing dispersion. Only
 worth revisiting with confirmed thread-safety guarantees from Kotak's SDK
 docs/support.
 
+## Addendum (2026-09-04) — read-timeout retries multiplying prep-loop latency
+
+Reported: log spam of `ReadTimeoutError` / urllib3 "Retrying" warnings from
+`fetch_prev_closes()`'s historical-candle calls to Upstox.
+
+**Root cause**: `upstox_client`'s `RESTClientObject` builds its
+`urllib3.PoolManager` with no explicit `retries=` kwarg, so every request
+silently falls back to urllib3's own global default: `Retry(total=3)`.
+Our own `REQUEST_TIMEOUT_S=15` (in `live_engine.py`) only bounds a single
+attempt — urllib3 retries that same 15s timeout underneath it, up to 3
+attempts total, before our code ever sees a failure. One slow/degraded
+ticker can therefore cost 30-45+ seconds instead of the intended 15s cap.
+`fetch_prev_closes()` makes this call sequentially for all ~300+ tickers
+in the universe, during the narrow pre-market prep window
+(`TIMING.prep_start` → `TIMING.market_open`) — a run of bad-luck timeouts
+on a rough network morning could eat meaningfully into, or blow past,
+`market_open`, directly threatening (or eliminating) the 5-minute entry
+window that follows it.
+
+**Fixes**:
+- `auth.py.get_analytics_client()` now explicitly sets the Upstox client's
+  connection-pool retry policy to `Retry(total=1, backoff_factor=0.3)`
+  right after construction (before any request is made — urllib3 only
+  applies `connection_pool_kw` to pools created after it's set). One
+  retry, not zero: still recovers a one-off blip cheaply, but bounds
+  worst case to ~2 attempts instead of urllib3's default 3. Verified this
+  actually attaches to a freshly built `ApiClient`.
+- `live_engine.SignalEngine.fetch_prev_closes()` now takes an optional
+  `max_seconds` wall-clock budget for the *whole loop* (independent of
+  the per-call timeout) — once spent, any tickers not yet attempted are
+  dropped for today exactly like an individual fetch failure (loud error
+  log, not fatal), rather than risking the entry window over prior-close
+  data for names the loop hadn't reached yet. `bot.py` computes this as
+  the actual seconds remaining until `market_open` minus a configurable
+  safety buffer (`TIMING.prep_deadline_buffer_s`, default 60s) and passes
+  it in; left `None` (e.g. a standalone/manual call) it's unbounded, same
+  as before. Verified with a synthetic slow-API test: a tight budget
+  correctly truncates the loop and reports exactly which tickers were
+  dropped; an unbounded call still fetches everything.
+
+Net effect: worst case for the whole prep pass is now capped at roughly
+`prep_deadline_buffer_s` seconds past whatever's already been spent when
+the budget check fires, instead of being able to silently expand by
+30-45s *per bad ticker* with no ceiling — the entry pass now always gets
+to start on time (with a possibly-smaller universe on a bad network
+morning) rather than risk starting late or not at all.
+
 ## Net expectation after these fixes
 
 Two of the three fixed items (demeaning, data-error guard) affect *which*

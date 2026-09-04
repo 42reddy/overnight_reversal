@@ -36,9 +36,27 @@ from configparser import ConfigParser
 import net_ipv4  # noqa: F401 — pins outbound calls to IPv4 (Upstox static-IP whitelist)
 import pyotp
 import upstox_client
+import urllib3
 from neo_api_client import NeoAPI
 
 logger = logging.getLogger(__name__)
+
+# upstox_client's RESTClientObject builds its urllib3.PoolManager with no
+# explicit `retries=` kwarg (see upstox_client/rest.py), so every request
+# falls back to urllib3's own global default: Retry(total=3) — i.e. up to
+# 3 attempts, EACH allowed to burn the full `_request_timeout` (15s, see
+# live_engine.REQUEST_TIMEOUT_S) before failing. That means one slow/
+# degraded ticker during live_engine.fetch_prev_closes()'s ~300+-ticker
+# SEQUENTIAL loop can cost 30-45+ seconds instead of the intended 15s cap
+# — and that loop runs during the narrow pre-market prep window, so a
+# string of bad-luck timeouts on a rough network morning could eat
+# meaningfully into (or blow past) market_open. One retry (not zero —
+# still worth recovering a one-off blip cheaply) with a short, fixed
+# backoff replaces the default's 3-attempt stack.
+UPSTOX_RETRY_POLICY = urllib3.util.retry.Retry(
+    total=1, connect=1, read=1, redirect=0, status=0,
+    backoff_factor=0.3,
+)
 
 
 def _cfg_or_env(cfg: ConfigParser, section: str, env_var: str, ini_key: str) -> str:
@@ -146,4 +164,13 @@ def get_analytics_client(cfg: ConfigParser) -> upstox_client.ApiClient:
                             "to use the Analytics Access Token for market data.")
     configuration = upstox_client.Configuration(sandbox=False)
     configuration.access_token = token
-    return upstox_client.ApiClient(configuration)
+    api_client = upstox_client.ApiClient(configuration)
+
+    # Must happen before this client makes its first request — urllib3 only
+    # applies connection_pool_kw to pools it creates AFTER this is set; see
+    # UPSTOX_RETRY_POLICY above for why the SDK's own default is too slow
+    # to fail for a ~300+-ticker sequential loop with a hard deadline
+    # (market open) downstream of it.
+    api_client.rest_client.pool_manager.connection_pool_kw["retries"] = UPSTOX_RETRY_POLICY
+
+    return api_client

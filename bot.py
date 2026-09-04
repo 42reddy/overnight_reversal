@@ -570,9 +570,17 @@ def run_trading_day(cfg: ConfigParser, capital: float):
 
     # Prior closes are the slow part (one historical-candle call per ticker) —
     # do it now, in whatever idle time is left before the open, not during
-    # the 09:15 sprint.
+    # the 09:15 sprint. Bounded by a wall-clock budget (not just Upstox's
+    # own per-request timeout) so a run of slow/timed-out tickers on a
+    # rough network morning can't eat into or past market_open — see
+    # SignalEngine.fetch_prev_closes's docstring.
     if now.time() < entry_cutoff:
-        bot.engine.fetch_prev_closes()
+        prep_buffer_s = float(cfg["TIMING"].get("prep_deadline_buffer_s", 60))
+        market_open_dt = datetime.now(IST).replace(
+            hour=market_open.hour, minute=market_open.minute, second=0, microsecond=0)
+        prev_close_budget = max(
+            (market_open_dt - datetime.now(IST)).total_seconds() - prep_buffer_s, 0.0)
+        bot.engine.fetch_prev_closes(max_seconds=prev_close_budget)
         wait_until(market_open, "market open")
         bot.run_entry_pass()
         wait_until(entry_cutoff, "entry cutoff")
