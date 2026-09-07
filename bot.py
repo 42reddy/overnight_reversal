@@ -49,6 +49,7 @@ Run:
                               # still prompts interactively if a TTY is attached)
 """
 
+import fcntl
 import json
 import logging
 import os
@@ -680,11 +681,62 @@ def _ignore_terminal_hangup():
         signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
 
+_lock_fd = None  # module-level and deliberately never closed — see _acquire_singleton_lock
+
+
+def _acquire_singleton_lock(lock_path: str):
+    """
+    Refuses to let a second bot.py (or app.py) instance start against the
+    same account/state files while one is already running. This is not a
+    hypothetical: two bot.py processes running concurrently actually
+    happened — an operator believed a tmux-detached (not actually dead)
+    process had crashed, started a fresh one without confirming the first
+    was gone, and both independently logged into Kotak, fetched signals
+    off slightly different timing, and were both about to place live
+    entry orders for the same strategy on the same account. The two
+    processes' interleaved log lines (duplicate "ENTRY PASS", different
+    ticker counts in the same second, ...) were the only reason it was
+    caught before real duplicate orders were confirmed.
+
+    Uses flock, not a hand-checked PID file — a PID file can go stale if a
+    process dies uncleanly (crash, kill -9, OOM) and nothing ever cleans
+    it up, silently blocking every future start; flock's lock is tied to
+    the open file descriptor itself and is released BY THE OS the instant
+    that descriptor closes, however the process ends. Idempotent within
+    one process — Streamlit's rerun-on-every-interaction model means
+    app.py's module-level code runs repeatedly in the same long-running
+    process, and re-flock()ing a file this same process already holds
+    (via a different, freshly-opened fd) would otherwise deadlock against
+    itself.
+    """
+    global _lock_fd
+    if _lock_fd is not None:
+        return
+    os.makedirs(os.path.dirname(lock_path) or ".", exist_ok=True)
+    fd = open(lock_path, "w")
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        msg = (
+            f"Another instance already holds the lock at {lock_path} — refusing to "
+            f"start a second one against the same account. Run `pgrep -af bot.py` (and "
+            f"check for a running `streamlit run app.py` too) to find it before doing "
+            f"anything else — do NOT delete this lock file to force a start unless "
+            f"you've confirmed no other process is actually running."
+        )
+        logger.critical(msg) if logging.getLogger().hasHandlers() else print(msg, file=sys.stderr)
+        sys.exit(1)
+    fd.write(str(os.getpid()))
+    fd.flush()
+    _lock_fd = fd
+
+
 def main():
     _ignore_terminal_hangup()
     _load_env()
     cfg = load_config()
     setup_logging(cfg["PATHS"]["log_file"])
+    _acquire_singleton_lock(cfg["PATHS"].get("lock_file", "state/bot.lock"))
 
     if "--once" in sys.argv:
         now = datetime.now(IST)

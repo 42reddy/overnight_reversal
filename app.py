@@ -22,7 +22,8 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from bot import ReversalBot, load_config, setup_logging, _parse_hhmm, IST, _load_env, _ignore_terminal_hangup
+from bot import (ReversalBot, load_config, setup_logging, _parse_hhmm, IST, _load_env,
+                  _ignore_terminal_hangup, _acquire_singleton_lock)
 from state import BasketState
 from trade_log import TradeLogger
 
@@ -52,6 +53,12 @@ def get_config():
     _load_env()
     cfg = load_config()
     setup_logging(cfg["PATHS"]["log_file"])
+    # Same lock bot.py uses, and the same file — so a headless `python
+    # bot.py` and this UI can't both be driving the same account/state
+    # files at once any more than two bot.py's can. @st.cache_resource
+    # means this whole function runs exactly once per server process
+    # regardless of how many browser interactions cause a script rerun.
+    _acquire_singleton_lock(cfg["PATHS"].get("lock_file", "state/bot.lock"))
     return cfg
 
 

@@ -346,6 +346,64 @@ the budget check fires, instead of being able to silently expand by
 to start on time (with a possibly-smaller universe on a bad network
 morning) rather than risk starting late or not at all.
 
+## Addendum (2026-09-04, later same day) — two bot.py instances ran concurrently
+
+Reported: "tmux bot crashed again" after the SIGHUP fix was already
+deployed. The `logs/bot.log` tail told a different story than another
+crash.
+
+**What actually happened**: the log showed everything happening in
+duplicate — two different "Fetching open prices (LTP) for N ticker(s)"
+counts (123 vs 122) seconds apart, two different `fetch_prev_closes`
+budget-exhausted lines with different elapsed times (635s vs 427s), two
+back-to-back `── ENTRY PASS ──` lines. A single process cannot produce
+this: `run_trading_day()` is one blocking synchronous call, it can't
+re-enter itself mid-execution. This was **two separate `bot.py` processes
+running at the same time** against the same live Kotak account, each
+independently logging in, fetching signals off slightly different timing,
+and both heading toward placing live entry orders for the same strategy.
+Likely mechanism: the earlier "crash" was actually a tmux client
+*disconnect* (session/process still alive on the server), not a process
+death — starting a fresh `python bot.py` without confirming the old one
+was actually gone produced two live instances. Beyond duplicate/doubled
+orders, this also risks a fresh Kotak login silently invalidating the
+other process's session (Kotak typically allows one active session per
+account), which could make that process's *exit* orders later in the day
+silently fail — a position that never gets flattened.
+
+**Immediate action taken**: told the user to check `pgrep -af bot.py` on
+the VPS, kill duplicates, and verify the actual broker-side order
+book/positions directly (not the bot's local `state/position.json`, which
+two processes writing to the same file concurrently could have corrupted
+via a last-writer-wins race) before doing anything else. This needed a
+human with account access to confirm/remediate — it is a live-trading
+incident-response step, not a code change.
+
+**Fix — a hard singleton lock, not just a warning**: `bot.py` now takes an
+exclusive `flock` on `PATHS.lock_file` (`state/bot.lock` by default) at
+startup, before login or any other work, and refuses to start at all
+(loud `CRITICAL` log, exit code 1) if another instance already holds it.
+`app.py` takes the exact same lock (same file) inside its
+`@st.cache_resource`-wrapped `get_config()`, so the headless bot and the
+Streamlit UI can't drive the same account simultaneously either, closing
+the identical class of bug across both front doors.
+
+Deliberately `flock`, not a hand-checked PID file: a PID file can go
+stale forever if a process dies uncleanly (crash, `kill -9`, OOM) with
+nothing left to clean it up, which would then block every future
+legitimate start. `flock`'s lock is tied to the open file descriptor and
+is released by the OS the instant that descriptor closes, however the
+process ends — verified directly:
+- idempotent within one process (calling it twice, e.g. across Streamlit
+  reruns, doesn't self-deadlock);
+- a second process attempting to start while the first holds the lock is
+  correctly refused (exit code 1) — reproduces exactly today's incident
+  and blocks it;
+- after `kill -9`-ing the holder (simulating the unclean-crash case that
+  matters most, not just a clean shutdown), a fresh process successfully
+  re-acquires the lock immediately — no stale-lock deadlock after a real
+  crash.
+
 ## Net expectation after these fixes
 
 Two of the three fixed items (demeaning, data-error guard) affect *which*
