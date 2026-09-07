@@ -11,7 +11,7 @@ Run: python test_order.py
 
 import logging
 
-from bot import load_config, setup_logging
+from bot import load_config, setup_logging, _load_env
 from auth import get_kotak_client
 
 TEST_SYMBOL = "YESBANK-EQ"
@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def main():
+    _load_env()
     cfg = load_config()
     setup_logging(cfg["PATHS"].get("log_file", "logs/test_order.log"))
     client = get_kotak_client(cfg)
