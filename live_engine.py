@@ -23,16 +23,25 @@ Same signal minute_backtest.py validates, run live:
   Short the n_short names with the most POSITIVE (demeaned) r_co (biggest
         overnight winners — bet on reversal down).
 
-Two-step, matched to the trading day:
+Three-step, matched to the trading day:
   1. fetch_prev_closes() — call once after login (well before 09:15); each
      name's prior completed session close doesn't change intraday, so this
      is cached for the rest of the day.
-  2. build_signals()     — call at/just after 09:15; ONE bulk LTP call for
-     the whole universe (not one call per name), so ranking + order
-     placement happens in a couple of seconds, not a couple of minutes.
+  2. start_streaming()   — call once prior closes are in (still well before
+     09:15), opens a WebSocket subscription to the whole tradeable universe
+     via LiveQuoteStreamer. Ticks (and top-of-book bid/ask) are already
+     flowing into an in-memory cache by the time the open happens, so
+     there's no request-response round trip sitting between "market opens"
+     and "we know the price" the way a REST call fired after market_open
+     would have — see build_signals()/_capture_open_quotes().
+  3. build_signals()     — call at/just after 09:15; reads the streamed
+     open-price cache (falling back to a one-off REST LTP pull for any
+     name that hasn't ticked yet), ranks the universe, and returns the
+     candidate pool.
 """
 
 import logging
+import threading
 import time
 
 import upstox_client
@@ -52,6 +61,110 @@ API_VERSION = "2.0"
 REQUEST_TIMEOUT_S = 15
 
 
+class LiveQuoteStreamer:
+    """
+    Wraps Upstox's WebSocket market-data feed (MarketDataStreamerV3, "full"
+    mode) with an in-memory {instrument_key: {"ltp", "bid", "ask", "ts"}}
+    cache, continuously updated by the SDK's own background WS thread.
+
+    Two jobs:
+      - build_signals()'s open-price capture reads off this cache instead
+        of firing a bulk REST LTP call after market_open unblocks (see
+        SignalEngine._capture_open_quotes) — the connection is opened
+        during the pre-market prep window, well before 09:15, so it's
+        already receiving ticks by the time the open happens.
+      - execution.Executor.place_entry_basket() reads get_touch() live, at
+        the moment each entry-ladder rung fires, to anchor that rung's
+        limit price to the current best bid/ask instead of a flat bps off
+        the (by-then possibly stale) signal price.
+
+    Thread-safety: ticks arrive on the SDK's own background WS thread;
+    every read/write of the cache goes through `_lock`.
+    """
+
+    def __init__(self, api_client: upstox_client.ApiClient, instrument_keys: list):
+        self._streamer = upstox_client.MarketDataStreamerV3(
+            api_client, instrumentKeys=list(instrument_keys), mode="full")
+        self._lock = threading.Lock()
+        self._quotes = {}  # instrument_key -> {"ltp": float, "bid": float, "ask": float, "ts": float}
+        self._opened = threading.Event()
+        self._streamer.on("open", lambda: self._opened.set())
+        self._streamer.on("message", self._on_message)
+        self._streamer.on("error", self._on_error)
+
+    def start(self, connect_timeout_s: float = 10.0):
+        self._streamer.connect()
+        if not self._opened.wait(connect_timeout_s):
+            logger.warning(
+                f"Upstox market-data stream did not confirm open within "
+                f"{connect_timeout_s:.0f}s — continuing anyway; build_signals() "
+                f"will fall back to REST LTP for whatever hasn't streamed a tick "
+                f"by open_capture_window_s"
+            )
+        else:
+            logger.info(f"Market-data stream connected, subscribed to "
+                        f"{len(self._streamer.instrumentKeys)} instrument(s)")
+
+    def stop(self):
+        try:
+            self._streamer.disconnect()
+        except Exception as e:
+            logger.warning(f"Market-data stream disconnect error (harmless if already closed): {e}")
+
+    def _on_error(self, err):
+        logger.warning(f"Market-data stream error: {err}")
+
+    def _on_message(self, data: dict):
+        ts = time.monotonic()
+        feeds = (data or {}).get("feeds") or {}
+        if not feeds:
+            return
+        with self._lock:
+            for key, feed in feeds.items():
+                full = ((feed.get("fullFeed") or {}).get("marketFF")) or {}
+                ltpc = full.get("ltpc") or {}
+                ltp = ltpc.get("ltp")
+                levels = ((full.get("marketLevel") or {}).get("bidAskQuote")) or []
+                bid = levels[0].get("bidP") if levels else None
+                ask = levels[0].get("askP") if levels else None
+                if ltp is None and bid is None and ask is None:
+                    continue
+                entry = self._quotes.setdefault(key, {})
+                if ltp is not None:
+                    entry["ltp"] = float(ltp)
+                if bid is not None:
+                    entry["bid"] = float(bid)
+                if ask is not None:
+                    entry["ask"] = float(ask)
+                entry["ts"] = ts
+
+    def snapshot_ltp(self, instrument_keys) -> dict:
+        """{instrument_key: ltp} for every key that's ticked so far."""
+        with self._lock:
+            return {k: self._quotes[k]["ltp"] for k in instrument_keys
+                    if k in self._quotes and "ltp" in self._quotes[k]}
+
+    def get_touch(self, instrument_key):
+        """(bid, ask) from the latest tick, or None if not (yet) known —
+        used by execution.py to anchor an entry-ladder rung's limit price."""
+        with self._lock:
+            q = self._quotes.get(instrument_key)
+            if not q or "bid" not in q or "ask" not in q:
+                return None
+            return q["bid"], q["ask"]
+
+    def wait_for_keys(self, instrument_keys, deadline_monotonic: float) -> list:
+        """Blocks (short sleeps) until every key has a tick or the deadline
+        passes. Returns whichever keys are still missing."""
+        while True:
+            with self._lock:
+                missing = [k for k in instrument_keys if k not in self._quotes]
+            remaining = deadline_monotonic - time.monotonic()
+            if not missing or remaining <= 0:
+                return missing
+            time.sleep(min(0.2, remaining))
+
+
 class SignalEngine:
     def __init__(self, cfg, api_client: upstox_client.ApiClient, instruments: dict = None):
         s = cfg["STRATEGY"]
@@ -62,14 +175,46 @@ class SignalEngine:
         self.max_data_error_pct = float(s.get("max_data_error_pct", 25.0))
         self.instruments = instruments if instruments is not None else load_instruments(cfg)
 
+        self._api_client = api_client
         self.history_api = upstox_client.HistoryApi(api_client)
         self.quote_api = upstox_client.MarketQuoteApi(api_client)
 
+        self.open_capture_window_s = float(cfg["TIMING"].get("open_capture_window_s", 4.0))
+
         self.prev_close = {}   # ticker -> float, filled by fetch_prev_closes()
+        self.streamer: LiveQuoteStreamer = None   # set by start_streaming()
 
     def _tradeable_tickers(self):
         return [t for t, info in self.instruments.items()
                 if not info.get("exclude") and info.get("instrument_key")]
+
+    # ── Step 2: open the market-data stream (call once prior closes are in,
+    #    still well before 09:15) ───────────────────────────────────────
+
+    def start_streaming(self):
+        """
+        Opens the WebSocket subscription for today's tradeable universe
+        (every ticker with a resolved prev_close — call after
+        fetch_prev_closes()) so ticks are already flowing into
+        LiveQuoteStreamer's in-memory cache by the time market_open hits,
+        instead of build_signals() firing a bulk REST LTP call and waiting
+        on that round trip after the open unblocks. Safe to call even if
+        the connection is slow/fails — build_signals() falls back to REST
+        for whatever hasn't streamed a tick by open_capture_window_s.
+        """
+        tickers = [t for t in self._tradeable_tickers() if t in self.prev_close]
+        keys = [self.instruments[t]["instrument_key"] for t in tickers]
+        if not keys:
+            logger.warning("start_streaming: no tradeable ticker has a resolved prev_close yet — "
+                            "nothing to subscribe (call fetch_prev_closes() first)")
+            return
+        self.streamer = LiveQuoteStreamer(self._api_client, keys)
+        self.streamer.start()
+
+    def stop_streaming(self):
+        if self.streamer is not None:
+            self.streamer.stop()
+            self.streamer = None
 
     # ── Step 1: prior close (once per day, cacheable) ──────────────
 
@@ -137,10 +282,49 @@ class SignalEngine:
                     + (f"; failed: {failed}" if failed else ""))
         return prev_close
 
-    # ── Step 2: open-price ranking (call at/after 09:15) ────────────
+    # ── Step 3: open-price ranking (call at/after 09:15) ────────────
+
+    def _capture_open_quotes(self, tickers) -> dict:
+        """
+        Preferred open-price source: read whatever's already accumulated in
+        the streaming cache (see start_streaming/LiveQuoteStreamer), waiting
+        up to open_capture_window_s total for stragglers that haven't
+        printed a first trade yet. Anything still missing after that falls
+        back to a one-off bulk REST LTP pull — same call this used to make
+        for the *whole* universe unconditionally, now only hit for the
+        handful of names the stream didn't cover in time (or the stream
+        never came up at all, e.g. a bad connect — see start_streaming).
+        """
+        if self.streamer is None:
+            logger.warning("No market-data stream active — falling back to a bulk REST "
+                            "LTP pull for the whole universe (call start_streaming() first "
+                            "to avoid this)")
+            return self._fetch_ltp_bulk(tickers)
+
+        keys = [self.instruments[t]["instrument_key"] for t in tickers]
+        key_to_ticker = {self.instruments[t]["instrument_key"]: t for t in tickers}
+
+        deadline = time.monotonic() + self.open_capture_window_s
+        missing_keys = self.streamer.wait_for_keys(keys, deadline)
+        ltp = {key_to_ticker[k]: px for k, px in self.streamer.snapshot_ltp(keys).items()}
+
+        if missing_keys:
+            missing_tickers = [key_to_ticker[k] for k in missing_keys]
+            logger.warning(
+                f"{len(missing_tickers)}/{len(tickers)} ticker(s) hadn't streamed a tick "
+                f"after {self.open_capture_window_s:.1f}s — falling back to a REST LTP pull "
+                f"for just these: {missing_tickers[:10]}" + (" ..." if len(missing_tickers) > 10 else "")
+            )
+            ltp.update(self._fetch_ltp_bulk(missing_tickers))
+
+        logger.info(f"Captured open prices for {len(ltp)}/{len(tickers)} ticker(s) "
+                    f"({len(tickers) - len(missing_keys)} via stream, {len(missing_keys)} via REST fallback)")
+        return ltp
 
     def _fetch_ltp_bulk(self, tickers) -> dict:
-        """One bulk LTP call for every ticker with a resolved prev_close."""
+        """One bulk LTP call — used as a fallback (see _capture_open_quotes)
+        for whatever the market-data stream didn't cover in time, or for the
+        whole universe if the stream isn't up at all."""
         keys = [self.instruments[t]["instrument_key"] for t in tickers]
         key_to_ticker = {self.instruments[t]["instrument_key"]: t for t in tickers}
         if not keys:
@@ -196,7 +380,7 @@ class SignalEngine:
             logger.error("No tickers with a resolved prior close — call fetch_prev_closes() first")
             return []
 
-        ltp = self._fetch_ltp_bulk(tickers)
+        ltp = self._capture_open_quotes(tickers)
 
         rows = []
         for ticker in tickers:

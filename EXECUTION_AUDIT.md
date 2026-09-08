@@ -418,3 +418,77 @@ number for an apples-to-apples comparison against what a single real
 margin pool can achieve (item 4), and expect a further, currently
 unquantified haircut from the last-30-minutes-of-the-day gap (item 5)
 until Kotak's real cutoff is confirmed and the exit window is tightened.
+
+## Addendum (2026-09-07) — streamed open-price capture + parallel IOC entry ladder
+
+Follow-up request: items 2 and 6 above (entries were a single flat-buffer
+LIMIT order resting up to `entry_cutoff`, and entry price is an LTP
+snapshot pulled a few seconds after `market_open` rather than the literal
+open print) were both still costing real, if unquantified, edge on a
+strategy whose reversal signal decays through the day — every second spent
+either fetching the open price or waiting for a resting order to fill is a
+second not spent capturing the move. Exit timing (item 5) was explicitly
+**not** touched this pass — the user was clear the reversal is a morning
+phenomenon and pushing `exit_start`/`exit_deadline` later to chase more of
+the close isn't wanted; conservative exit timing stays as-is.
+
+**1. Streamed open-price capture** (`live_engine.LiveQuoteStreamer`,
+`SignalEngine.start_streaming/stop_streaming/_capture_open_quotes`):
+`bot.py` now opens an Upstox WebSocket subscription (`MarketDataStreamerV3`,
+`mode="full"`) for today's tradeable universe right after
+`fetch_prev_closes()` — still well before `market_open` — instead of
+`build_signals()` firing one bulk REST LTP call after the open unblocks.
+Ticks (and top-of-book bid/ask) are already accumulating in an in-memory
+cache by 09:15, so there's no request-response round trip on the critical
+path between "market opens" and "we know the price." `build_signals()`
+waits up to `TIMING.open_capture_window_s` (default 4s) for stragglers,
+then falls back to the old bulk REST LTP call for just whatever's still
+missing — full REST fallback also kicks in automatically if the stream
+never connects at all, so this degrades gracefully rather than being a
+single point of failure. Verified (unit-level, not live market hours):
+message-parsing against a realistic v3 "full" feed payload, and the
+missing-ticker → REST-fallback wiring, both behave as designed.
+
+**2. Parallel IOC entry ladder replaces the resting LIMIT order**
+(`execution.Executor.place_entry_basket`): Kotak's API supports
+`validity="IOC"` for NSE cash equity (confirmed against the installed
+`kotakneoapi` 3.0.1 SDK's own request validation) — an IOC order either
+fills (fully/partially) or is cancelled by the exchange essentially
+immediately, unlike the old `validity="DAY"` order that could legitimately
+sit open for the full `market_open`→`entry_cutoff` window (up to 5
+minutes) before the cancel pass ever looked at it. Entries are now fired
+as a ladder of rungs (`STRATEGY.entry_ladder_bps`, default `10,25,45`):
+each rung places an IOC order for every name still short its full quantity,
+**in parallel** across a thread pool (`STRATEGY.entry_parallelism`, default
+8) rather than the old sequential per-name loop, then polls briefly
+(`entry_ladder_poll_interval_s`/`_timeout_s`) for the (near-instant) result
+before moving to the next, wider rung. A name still short after the last
+rung is simply left partially filled — the same outcome a cancelled
+resting order used to produce, just discovered in seconds instead of up to
+5 minutes. `run_cancel_pass` (~09:20) is unchanged in code but should now
+normally be a no-op, since nothing is left resting.
+
+**3. Liquidity-aware buffer**: each rung's limit price is anchored to the
+*live* best bid/ask read from `LiveQuoteStreamer.get_touch()` at the
+moment that rung fires — buy limit = ask × (1 + cushion), sell limit =
+bid × (1 − cushion) — rather than a flat bps off the (by-then possibly
+stale) signal price. Falls back to the old `signal_price × (1 ± cushion)`
+behavior for any name the stream has no depth for at that moment.
+
+**Concurrency caveat, not resolved here**: the previous rewrite
+deliberately left order placement sequential specifically because Kotak
+SDK thread-safety wasn't confirmed (see the 2026-09-03 addendum above).
+Inspecting the currently-installed `kotakneoapi` 3.0.1 package shows it's
+built on a pooled `httpx.Client` (documented thread-safe) with its own
+rate limiter using a real `threading.Lock`, and `order_placing()` builds
+fresh per-call request dicts off read-only session config rather than
+mutating shared state — reasonable evidence this SDK version tolerates
+concurrent callers, but this is inspection, not a live-verified guarantee.
+**Watch the first several live parallel mornings against the actual Kotak
+order book** (exactly one order per name per rung, no duplicates/drops)
+before trusting `entry_parallelism` at higher values.
+
+**Not done / explicitly out of scope this pass** (per direct instruction):
+exit timing (item 5), signal-proportional position sizing, and a
+transaction-cost-analysis report. `sizing.py` and the exit pass are
+unchanged.

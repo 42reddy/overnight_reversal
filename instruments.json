@@ -1,2037 +1,1805 @@
 {
   "_comment": "Curated NSE cash-equity intraday universe. instrument_key is left blank and is auto-filled by instrument_master.py from Upstox's NSE instrument master (run once at bot startup, or manually: `python instrument_master.py`). exclude=true drops a ticker from trading without deleting it.",
   "universe": {
-    "ANANDRATHI": {
-      "instrument_key": "NSE_EQ|INE463V01026",
-      "exclude": false,
-      "isin": "INE463V01026",
-      "market_cap": 364792665796.0
-    },
-    "CANFINHOME": {
-      "instrument_key": "NSE_EQ|INE477A01020",
-      "exclude": false,
-      "isin": "INE477A01020",
-      "market_cap": 105644855750.2445
-    },
-    "CUB": {
-      "instrument_key": "NSE_EQ|INE491A01021",
-      "exclude": false,
-      "isin": "INE491A01021",
-      "market_cap": 232825098265.18683
-    },
-    "ECLERX": {
-      "instrument_key": "NSE_EQ|INE738I01010",
-      "exclude": false,
-      "isin": "INE738I01010",
-      "market_cap": 181639486367.02148
-    },
-    "HOMEFIRST": {
-      "instrument_key": "NSE_EQ|INE481N01025",
-      "exclude": false,
-      "isin": "INE481N01025",
-      "market_cap": 123672935576.24243
-    },
-    "IIFL": {
-      "instrument_key": "NSE_EQ|INE530B01024",
-      "exclude": false,
-      "isin": "INE530B01024",
-      "market_cap": 271823842244.29626
-    },
-    "J&KBANK": {
-      "instrument_key": "NSE_EQ|INE168A01041",
-      "exclude": false,
-      "isin": "INE168A01041",
-      "market_cap": 162292276773.8075
-    },
-    "JMFINANCIL": {
-      "instrument_key": "NSE_EQ|INE780C01023",
-      "exclude": false,
-      "isin": "INE780C01023",
-      "market_cap": 122730111792.0
-    },
-    "MOTILALOFS": {
-      "instrument_key": "NSE_EQ|INE338I01027",
-      "exclude": false,
-      "isin": "INE338I01027",
-      "market_cap": 611960404728.0
-    },
-    "NUVAMA": {
-      "instrument_key": "NSE_EQ|INE531F01023",
-      "exclude": false,
-      "isin": "INE531F01023",
-      "market_cap": 328829572680.0
-    },
-    "SBFC": {
-      "instrument_key": "NSE_EQ|INE423Y01016",
-      "exclude": false,
-      "isin": "INE423Y01016",
-      "market_cap": 110694343259.43672
-    },
-    "CARTRADE": {
-      "instrument_key": "NSE_EQ|INE290S01011",
-      "exclude": false,
-      "isin": "INE290S01011",
-      "market_cap": 144085599891.00342
-    },
-    "LATENTVIEW": {
-      "instrument_key": "NSE_EQ|INE0I7C01011",
-      "exclude": false,
-      "isin": "INE0I7C01011",
-      "market_cap": 56397400773.0603
-    },
-    "MASTEK": {
-      "instrument_key": "NSE_EQ|INE759A01021",
-      "exclude": false,
-      "isin": "INE759A01021",
-      "market_cap": 55873489552.0
-    },
-    "NEWGEN": {
-      "instrument_key": "NSE_EQ|INE619B01017",
-      "exclude": false,
-      "isin": "INE619B01017",
-      "market_cap": 75103915040.31146
-    },
-    "RATEGAIN": {
-      "instrument_key": "NSE_EQ|INE0CLI01024",
-      "exclude": false,
-      "isin": "INE0CLI01024",
-      "market_cap": 107887790936.25
-    },
-    "ZENTEC": {
-      "instrument_key": "NSE_EQ|INE251B01027",
-      "exclude": false,
-      "isin": "INE251B01027",
-      "market_cap": 160159957183.49414
-    },
-    "ASTRAZEN": {
-      "instrument_key": "NSE_EQ|INE203A01020",
-      "exclude": false,
-      "isin": "INE203A01020",
-      "market_cap": 172925000000.0
-    },
-    "CAPLIPOINT": {
-      "instrument_key": "NSE_EQ|INE475E01026",
-      "exclude": false,
-      "isin": "INE475E01026",
-      "market_cap": 206082906483.6914
-    },
-    "EMCURE": {
-      "instrument_key": "NSE_EQ|INE168P01015",
-      "exclude": false,
-      "isin": "INE168P01015",
-      "market_cap": 350165844668.6293
-    },
-    "ERIS": {
-      "instrument_key": "NSE_EQ|INE406M01024",
-      "exclude": false,
-      "isin": "INE406M01024",
-      "market_cap": 180144441552.88147
-    },
-    "GLAND": {
-      "instrument_key": "NSE_EQ|INE068V01023",
-      "exclude": false,
-      "isin": "INE068V01023",
-      "market_cap": 474279150375.0
-    },
-    "GRANULES": {
-      "instrument_key": "NSE_EQ|INE101D01020",
-      "exclude": false,
-      "isin": "INE101D01020",
-      "market_cap": 207455585286.06476
-    },
-    "JBCHEPHARM": {
-      "instrument_key": "",
-      "exclude": false,
-      "isin": "",
-      "market_cap": 387925889566.6
-    },
-    "JUBLPHARMA": {
-      "instrument_key": "NSE_EQ|INE700A01033",
-      "exclude": false,
-      "isin": "INE700A01033",
-      "market_cap": 143752189809.92578
-    },
-    "KIMS": {
-      "instrument_key": "NSE_EQ|INE967H01025",
-      "exclude": false,
-      "isin": "INE967H01025",
-      "market_cap": 303465378073.01697
-    },
-    "NEULANDLAB": {
-      "instrument_key": "NSE_EQ|INE794A01010",
-      "exclude": false,
-      "isin": "INE794A01010",
-      "market_cap": 295408194225.0
-    },
-    "PFIZER": {
-      "instrument_key": "NSE_EQ|INE182A01018",
-      "exclude": false,
-      "isin": "INE182A01018",
-      "market_cap": 213454338271.24805
-    },
-    "POLYMED": {
-      "instrument_key": "NSE_EQ|INE205C01021",
-      "exclude": false,
-      "isin": "INE205C01021",
-      "market_cap": 178031279600.64514
-    },
-    "RAINBOW": {
-      "instrument_key": "NSE_EQ|INE961O01016",
-      "exclude": false,
-      "isin": "INE961O01016",
-      "market_cap": 146737484972.81006
-    },
-    "SANOFI": {
-      "instrument_key": "NSE_EQ|INE058A01010",
-      "exclude": false,
-      "isin": "INE058A01010",
-      "market_cap": 72661612410.0
-    },
-    "BASF": {
-      "instrument_key": "NSE_EQ|INE373A01013",
-      "exclude": false,
-      "isin": "INE373A01013",
-      "market_cap": 162788637025.55664
-    },
-    "DEEPAKFERT": {
-      "instrument_key": "NSE_EQ|INE501A01019",
-      "exclude": false,
-      "isin": "INE501A01019",
-      "market_cap": 180386507147.5
-    },
-    "EIDPARRY": {
-      "instrument_key": "NSE_EQ|INE126A01031",
-      "exclude": false,
-      "isin": "INE126A01031",
-      "market_cap": 141581544210.5786
-    },
-    "GNFC": {
-      "instrument_key": "NSE_EQ|INE113A01013",
-      "exclude": false,
-      "isin": "INE113A01013",
-      "market_cap": 84637833408.0
-    },
-    "GSFC": {
-      "instrument_key": "NSE_EQ|INE026A01025",
-      "exclude": false,
-      "isin": "INE026A01025",
-      "market_cap": 63258307887.5
-    },
-    "HIMATSEIDE": {
-      "instrument_key": "NSE_EQ|INE049A01027",
-      "exclude": false,
-      "isin": "INE049A01027",
-      "market_cap": 8710167936.921486
-    },
-    "KANSAINER": {
-      "instrument_key": "NSE_EQ|INE531A01024",
-      "exclude": false,
-      "isin": "INE531A01024",
-      "market_cap": 157509667210.25
-    },
-    "PCBL": {
-      "instrument_key": "NSE_EQ|INE602A01031",
-      "exclude": false,
-      "isin": "INE602A01031",
-      "market_cap": 124924376770.0
-    },
-    "RCF": {
-      "instrument_key": "NSE_EQ|INE027A01015",
-      "exclude": false,
-      "isin": "INE027A01015",
-      "market_cap": 63173805509.53293
-    },
-    "ELECON": {
-      "instrument_key": "NSE_EQ|INE205B01031",
-      "exclude": false,
-      "isin": "INE205B01031",
-      "market_cap": 92508871142.5
-    },
-    "ELGIEQUIP": {
-      "instrument_key": "NSE_EQ|INE285A01027",
-      "exclude": false,
-      "isin": "INE285A01027",
-      "market_cap": 198255373210.52515
-    },
-    "ENGINERSIN": {
-      "instrument_key": "NSE_EQ|INE510A01028",
-      "exclude": false,
-      "isin": "INE510A01028",
-      "market_cap": 157399959697.7812
-    },
-    "FINPIPE": {
-      "instrument_key": "NSE_EQ|INE183A01024",
-      "exclude": false,
-      "isin": "INE183A01024",
-      "market_cap": 96048879738.36685
-    },
-    "GRAPHITE": {
-      "instrument_key": "NSE_EQ|INE371A01025",
-      "exclude": false,
-      "isin": "INE371A01025",
-      "market_cap": 143190777612.51196
-    },
-    "HEG": {
-      "instrument_key": "NSE_EQ|INE545A01024",
-      "exclude": false,
-      "isin": "INE545A01024",
-      "market_cap": 140854303858.36548
-    },
-    "JINDALSAW": {
-      "instrument_key": "NSE_EQ|INE324A01032",
-      "exclude": false,
-      "isin": "INE324A01032",
-      "market_cap": 197503133866.5
-    },
-    "KSB": {
-      "instrument_key": "NSE_EQ|INE999A01023",
-      "exclude": false,
-      "isin": "INE999A01023",
-      "market_cap": 144139284128.5022
-    },
-    "MAHSEAMLES": {
-      "instrument_key": "NSE_EQ|INE271B01025",
-      "exclude": false,
-      "isin": "INE271B01025",
-      "market_cap": 87045910827.73389
-    },
-    "PRAJIND": {
-      "instrument_key": "NSE_EQ|INE074A01025",
-      "exclude": false,
-      "isin": "INE074A01025",
-      "market_cap": 62551591602.58789
-    },
-    "PTCIL": {
-      "instrument_key": "NSE_EQ|INE596F01018",
-      "exclude": false,
-      "isin": "INE596F01018",
-      "market_cap": 341155452495.0
-    },
-    "RHIM": {
-      "instrument_key": "NSE_EQ|INE743M01012",
-      "exclude": false,
-      "isin": "INE743M01012",
-      "market_cap": 76033827573.96936
-    },
-    "SCHNEIDER": {
-      "instrument_key": "NSE_EQ|INE839M01018",
-      "exclude": false,
-      "isin": "INE839M01018",
-      "market_cap": 284127336465.5017
-    },
-    "SYRMA": {
-      "instrument_key": "NSE_EQ|INE0DYJ01015",
-      "exclude": false,
-      "isin": "INE0DYJ01015",
-      "market_cap": 278901708901.0582
-    },
-    "TEGA": {
-      "instrument_key": "NSE_EQ|INE011K01018",
-      "exclude": false,
-      "isin": "INE011K01018",
-      "market_cap": 117988049709.0
-    },
-    "USHAMART": {
-      "instrument_key": "NSE_EQ|INE228A01035",
-      "exclude": false,
-      "isin": "INE228A01035",
-      "market_cap": 152078381745.91187
-    },
-    "WELCORP": {
-      "instrument_key": "NSE_EQ|INE191B01025",
-      "exclude": false,
-      "isin": "INE191B01025",
-      "market_cap": 673394376293.1367
-    },
-    "AFCONS": {
-      "instrument_key": "NSE_EQ|INE101I01011",
-      "exclude": false,
-      "isin": "INE101I01011",
-      "market_cap": 104910565992.75
-    },
-    "ANANTRAJ": {
-      "instrument_key": "NSE_EQ|INE242C01024",
-      "exclude": false,
-      "isin": "INE242C01024",
-      "market_cap": 211535655060.97107
-    },
-    "ASAHIINDIA": {
-      "instrument_key": "NSE_EQ|INE439A01020",
-      "exclude": false,
-      "isin": "INE439A01020",
-      "market_cap": 242486748142.3042
-    },
-    "BIRLACORPN": {
-      "instrument_key": "NSE_EQ|INE340A01012",
-      "exclude": false,
-      "isin": "INE340A01012",
-      "market_cap": 67730052013.84332
-    },
-    "CENTURYPLY": {
-      "instrument_key": "NSE_EQ|INE348B01021",
-      "exclude": false,
-      "isin": "INE348B01021",
-      "market_cap": 167840588007.57263
-    },
-    "INDIACEM": {
-      "instrument_key": "NSE_EQ|INE383A01012",
-      "exclude": false,
-      "isin": "INE383A01012",
-      "market_cap": 167274554894.34006
-    },
-    "KAJARIACER": {
-      "instrument_key": "NSE_EQ|INE217B01036",
-      "exclude": false,
-      "isin": "INE217B01036",
-      "market_cap": 193128808450.0
-    },
-    "MAHLIFE": {
-      "instrument_key": "NSE_EQ|INE813A01018",
-      "exclude": false,
-      "isin": "INE813A01018",
-      "market_cap": 76238935982.78082
-    },
-    "NUVOCO": {
-      "instrument_key": "NSE_EQ|INE118D01016",
-      "exclude": false,
-      "isin": "INE118D01016",
-      "market_cap": 115307866175.95816
-    },
-    "SOBHA": {
-      "instrument_key": "NSE_EQ|INE671H01015",
-      "exclude": false,
-      "isin": "INE671H01015",
-      "market_cap": 133146830557.77759
-    },
-    "BLUEDART": {
-      "instrument_key": "NSE_EQ|INE233B01017",
-      "exclude": false,
-      "isin": "INE233B01017",
-      "market_cap": 121131103070.0
-    },
-    "CESC": {
-      "instrument_key": "NSE_EQ|INE486A01021",
-      "exclude": false,
-      "isin": "INE486A01021",
-      "market_cap": 192406539823.86017
-    },
-    "DELHIVERY": {
-      "instrument_key": "NSE_EQ|INE148O01028",
-      "exclude": false,
-      "isin": "INE148O01028",
-      "market_cap": 345164362517.0668
-    },
-    "GPPL": {
-      "instrument_key": "NSE_EQ|INE517F01014",
-      "exclude": false,
-      "isin": "INE517F01014",
-      "market_cap": 81742437824.63242
-    },
-    "GUJGASLTD": {
-      "instrument_key": "",
-      "exclude": false,
-      "isin": "",
-      "market_cap": 306848399165.45
-    },
-    "IGL": {
-      "instrument_key": "NSE_EQ|INE203G01027",
-      "exclude": false,
-      "isin": "INE203G01027",
-      "market_cap": 209790248304.93164
-    },
-    "JPPOWER": {
-      "instrument_key": "NSE_EQ|INE351F01018",
-      "exclude": false,
-      "isin": "INE351F01018",
-      "market_cap": 113493274514.9781
-    },
-    "SCI": {
-      "instrument_key": "NSE_EQ|INE109A01011",
-      "exclude": false,
-      "isin": "INE109A01011",
-      "market_cap": 133917215375.0
-    },
-    "DEVYANI": {
-      "instrument_key": "NSE_EQ|INE872J01023",
-      "exclude": false,
-      "isin": "INE872J01023",
-      "market_cap": 170996422623.8969
-    },
-    "DOMS": {
-      "instrument_key": "NSE_EQ|INE321T01012",
-      "exclude": false,
-      "isin": "INE321T01012",
-      "market_cap": 135274300944.0
-    },
-    "EIHOTEL": {
-      "instrument_key": "NSE_EQ|INE230A01023",
-      "exclude": false,
-      "isin": "INE230A01023",
-      "market_cap": 184138491023.7401
-    },
-    "GAEL": {
-      "instrument_key": "NSE_EQ|INE036B01030",
-      "exclude": false,
-      "isin": "INE036B01030",
-      "market_cap": 78905113079.89929
-    },
-    "GILLETTE": {
-      "instrument_key": "NSE_EQ|INE322A01010",
-      "exclude": false,
-      "isin": "INE322A01010",
-      "market_cap": 241766017531.5
-    },
-    "GODFRYPHLP": {
-      "instrument_key": "NSE_EQ|INE260B01028",
-      "exclude": false,
-      "isin": "INE260B01028",
-      "market_cap": 324176899424.2969
-    },
-    "HONASA": {
-      "instrument_key": "NSE_EQ|INE0J5401028",
-      "exclude": false,
-      "isin": "INE0J5401028",
-      "market_cap": 154372466276.0
-    },
-    "JKTYRE": {
-      "instrument_key": "NSE_EQ|INE573A01042",
-      "exclude": false,
-      "isin": "INE573A01042",
-      "market_cap": 107805866157.60907
-    },
-    "LEMONTREE": {
-      "instrument_key": "NSE_EQ|INE970X01018",
-      "exclude": false,
-      "isin": "INE970X01018",
-      "market_cap": 84054626389.7136
-    },
-    "MINDACORP": {
-      "instrument_key": "NSE_EQ|INE842C01021",
-      "exclude": false,
-      "isin": "INE842C01021",
-      "market_cap": 167671118742.516
-    },
-    "MSUMI": {
-      "instrument_key": "NSE_EQ|INE0FS801015",
-      "exclude": false,
-      "isin": "INE0FS801015",
-      "market_cap": 246100977082.4252
-    },
-    "RENUKA": {
-      "instrument_key": "NSE_EQ|INE087H01022",
-      "exclude": false,
-      "isin": "INE087H01022",
-      "market_cap": 51530735455.63941
-    },
-    "SAPPHIRE": {
-      "instrument_key": "NSE_EQ|INE806T01020",
-      "exclude": false,
-      "isin": "INE806T01020",
-      "market_cap": 73991469080.7204
-    },
-    "VIPIND": {
-      "instrument_key": "NSE_EQ|INE054A01027",
-      "exclude": false,
-      "isin": "INE054A01027",
-      "market_cap": 43148810160.0
-    },
-    "WHIRLPOOL": {
-      "instrument_key": "NSE_EQ|INE716A01013",
-      "exclude": false,
-      "isin": "INE716A01013",
-      "market_cap": 101682234290.79114
-    },
-    "FACT": {
-      "instrument_key": "NSE_EQ|INE188A01015",
-      "exclude": false,
-      "isin": "INE188A01015",
-      "market_cap": 527525426803.5
-    },
-    "FLUOROCHEM": {
-      "instrument_key": "NSE_EQ|INE09N301011",
-      "exclude": false,
-      "isin": "INE09N301011",
-      "market_cap": 520699995727.53906
-    },
-    "BDL": {
-      "instrument_key": "NSE_EQ|INE171Z01026",
-      "exclude": false,
-      "isin": "INE171Z01026",
-      "market_cap": 458203125000.0
-    },
-    "HINDCOPPER": {
-      "instrument_key": "NSE_EQ|INE531E01026",
-      "exclude": false,
-      "isin": "INE531E01026",
-      "market_cap": 509283223741.98486
-    },
-    "ANTHEM": {
-      "instrument_key": "NSE_EQ|INE0CZ201020",
-      "exclude": false,
-      "isin": "INE0CZ201020",
-      "market_cap": 519304455249.5
-    },
-    "SUNDARMFIN": {
-      "instrument_key": "NSE_EQ|INE660A01013",
-      "exclude": false,
-      "isin": "INE660A01013",
-      "market_cap": 500398804860.53467
-    },
-    "SONACOMS": {
-      "instrument_key": "NSE_EQ|INE073K01018",
-      "exclude": false,
-      "isin": "INE073K01018",
-      "market_cap": 505039481175.0
-    },
-    "VMM": {
-      "instrument_key": "NSE_EQ|INE01EA01019",
-      "exclude": false,
-      "isin": "INE01EA01019",
-      "market_cap": 499166374782.3514
-    },
-    "MPHASIS": {
-      "instrument_key": "NSE_EQ|INE356A01018",
-      "exclude": false,
-      "isin": "INE356A01018",
-      "market_cap": 478092118775.0
-    },
-    "TATACOMM": {
-      "instrument_key": "NSE_EQ|INE151A01013",
-      "exclude": false,
-      "isin": "INE151A01013",
-      "market_cap": 494281501753.5974
-    },
-    "360ONE": {
-      "instrument_key": "NSE_EQ|INE466L01038",
-      "exclude": false,
-      "isin": "INE466L01038",
-      "market_cap": 475057175912.0947
-    },
-    "AIIL": {
-      "instrument_key": "NSE_EQ|INE206F01022",
-      "exclude": false,
-      "isin": "INE206F01022",
-      "market_cap": 457987301783.4778
-    },
-    "UPL": {
-      "instrument_key": "NSE_EQ|INE628A01036",
-      "exclude": false,
-      "isin": "INE628A01036",
-      "market_cap": 479360628200.4796
-    },
-    "RVNL": {
-      "instrument_key": "NSE_EQ|INE415G01027",
-      "exclude": false,
-      "isin": "INE415G01027",
-      "market_cap": 434476498618.7622
-    },
-    "PIRAMALFIN": {
-      "instrument_key": "NSE_EQ|INE202B01038",
-      "exclude": false,
-      "isin": "INE202B01038",
-      "market_cap": 503109585613.29346
-    },
-    "PREMIERENE": {
-      "instrument_key": "NSE_EQ|INE0BS701011",
-      "exclude": false,
-      "isin": "INE0BS701011",
-      "market_cap": 457270193155.4436
-    },
-    "AJANTPHARM": {
-      "instrument_key": "NSE_EQ|INE031B01049",
-      "exclude": false,
-      "isin": "INE031B01049",
-      "market_cap": 437956393416.71484
-    },
-    "BALKRISIND": {
-      "instrument_key": "NSE_EQ|INE787D01026",
-      "exclude": false,
-      "isin": "INE787D01026",
-      "market_cap": 450777033081.3159
-    },
-    "THERMAX": {
-      "instrument_key": "NSE_EQ|INE152A01029",
-      "exclude": false,
-      "isin": "INE152A01029",
-      "market_cap": 440816773856.7766
-    },
-    "GLAXO": {
-      "instrument_key": "NSE_EQ|INE159A01016",
-      "exclude": false,
-      "isin": "INE159A01016",
-      "market_cap": 507557435010.958
-    },
-    "SUPREMEIND": {
-      "instrument_key": "NSE_EQ|INE195A01028",
-      "exclude": false,
-      "isin": "INE195A01028",
-      "market_cap": 458129852950.0
-    },
-    "AEGISLOG": {
-      "instrument_key": "NSE_EQ|INE208C01025",
-      "exclude": false,
-      "isin": "INE208C01025",
-      "market_cap": 427974317138.6719
-    },
-    "IPCALAB": {
-      "instrument_key": "NSE_EQ|INE571A01038",
-      "exclude": false,
-      "isin": "INE571A01038",
-      "market_cap": 504262497502.84937
-    },
-    "POONAWALLA": {
-      "instrument_key": "NSE_EQ|INE511C01022",
-      "exclude": false,
-      "isin": "INE511C01022",
-      "market_cap": 403730863778.13477
-    },
-    "VOLTAS": {
-      "instrument_key": "NSE_EQ|INE226A01021",
-      "exclude": false,
-      "isin": "INE226A01021",
-      "market_cap": 398716111700.0
-    },
-    "EMBASSY": {
-      "instrument_key": "NSE_EQ|INE041025011",
-      "exclude": false,
-      "isin": "INE041025011",
-      "market_cap": 350644853410.56
-    },
-    "ASTERDM": {
-      "instrument_key": "NSE_EQ|INE914M01019",
-      "exclude": false,
-      "isin": "INE914M01019",
-      "market_cap": 660553363633.6672
-    },
-    "PETRONET": {
-      "instrument_key": "NSE_EQ|INE347G01014",
-      "exclude": false,
-      "isin": "INE347G01014",
-      "market_cap": 438450007411.85205
-    },
-    "NAVINFLUOR": {
-      "instrument_key": "NSE_EQ|INE048G01026",
-      "exclude": false,
-      "isin": "INE048G01026",
-      "market_cap": 443096872504.0
-    },
-    "GODREJIND": {
-      "instrument_key": "NSE_EQ|INE233A01035",
-      "exclude": false,
-      "isin": "INE233A01035",
-      "market_cap": 388355589533.4027
-    },
-    "INDOMIM": {
-      "instrument_key": "NSE_EQ|INE084101034",
-      "exclude": false,
-      "isin": "INE084101034",
-      "market_cap": 424684914904.66223
-    },
-    "AIAENG": {
-      "instrument_key": "NSE_EQ|INE212H01026",
-      "exclude": false,
-      "isin": "INE212H01026",
-      "market_cap": 395977012210.63477
-    },
-    "ASTRAL": {
-      "instrument_key": "NSE_EQ|INE006I01046",
-      "exclude": false,
-      "isin": "INE006I01046",
-      "market_cap": 404855795641.0
-    },
-    "CPPLUS": {
-      "instrument_key": "NSE_EQ|INE819V01029",
-      "exclude": false,
-      "isin": "INE819V01029",
-      "market_cap": 440893879648.72314
-    },
-    "PAGEIND": {
-      "instrument_key": "NSE_EQ|INE761H01022",
-      "exclude": false,
-      "isin": "INE761H01022",
-      "market_cap": 397914454950.0
-    },
-    "JKCEMENT": {
-      "instrument_key": "NSE_EQ|INE823G01014",
-      "exclude": false,
-      "isin": "INE823G01014",
-      "market_cap": 392406812703.5
-    },
-    "ENDURANCE": {
-      "instrument_key": "NSE_EQ|INE913H01037",
-      "exclude": false,
-      "isin": "INE913H01037",
-      "market_cap": 399721608293.2969
-    },
-    "EXIDEIND": {
-      "instrument_key": "NSE_EQ|INE302A01020",
-      "exclude": false,
-      "isin": "INE302A01020",
-      "market_cap": 370812500000.0
-    },
-    "CONCOR": {
-      "instrument_key": "NSE_EQ|INE111A01025",
-      "exclude": false,
-      "isin": "INE111A01025",
-      "market_cap": 391471618590.0
-    },
-    "IRCTC": {
-      "instrument_key": "NSE_EQ|INE335Y01020",
-      "exclude": false,
-      "isin": "INE335Y01020",
-      "market_cap": 385080004882.8125
-    },
-    "3MINDIA": {
-      "instrument_key": "NSE_EQ|INE470A01017",
-      "exclude": false,
-      "isin": "INE470A01017",
-      "market_cap": 375295807050.0
-    },
-    "CUPID": {
-      "instrument_key": "NSE_EQ|INE509F01029",
-      "exclude": false,
-      "isin": "INE509F01029",
-      "market_cap": 369848909120.6848
-    },
-    "HSCL": {
-      "instrument_key": "NSE_EQ|INE019C01026",
-      "exclude": false,
-      "isin": "INE019C01026",
-      "market_cap": 343539314730.04456
-    },
-    "COCHINSHIP": {
-      "instrument_key": "NSE_EQ|INE704P01025",
-      "exclude": false,
-      "isin": "INE704P01025",
-      "market_cap": 388280929624.8706
-    },
-    "PATANJALI": {
-      "instrument_key": "NSE_EQ|INE619A01035",
-      "exclude": false,
-      "isin": "INE619A01035",
-      "market_cap": 376188786288.6185
-    },
-    "MEDANTA": {
-      "instrument_key": "NSE_EQ|INE474Q01031",
-      "exclude": false,
-      "isin": "INE474Q01031",
-      "market_cap": 391818922378.68164
-    },
-    "NLCINDIA": {
-      "instrument_key": "NSE_EQ|INE589A01014",
-      "exclude": false,
-      "isin": "INE589A01014",
-      "market_cap": 380354404921.9836
-    },
-    "HUDCO": {
-      "instrument_key": "NSE_EQ|INE031A01017",
-      "exclude": false,
-      "isin": "INE031A01017",
-      "market_cap": 357499305665.5884
-    },
-    "KPRMILL": {
-      "instrument_key": "NSE_EQ|INE930H01031",
-      "exclude": false,
-      "isin": "INE930H01031",
-      "market_cap": 396812373016.5
-    },
-    "PIIND": {
-      "instrument_key": "NSE_EQ|INE603J01030",
-      "exclude": false,
-      "isin": "INE603J01030",
-      "market_cap": 363654798214.85254
-    },
-    "NH": {
-      "instrument_key": "NSE_EQ|INE410P01011",
-      "exclude": false,
-      "isin": "INE410P01011",
-      "market_cap": 393749640197.51587
-    },
-    "LTTS": {
-      "instrument_key": "NSE_EQ|INE010V01017",
-      "exclude": false,
-      "isin": "INE010V01017",
-      "market_cap": 380552903144.5305
-    },
-    "UBL": {
-      "instrument_key": "NSE_EQ|INE686F01025",
-      "exclude": false,
-      "isin": "INE686F01025",
-      "market_cap": 346079905981.30383
-    },
-    "TATATECH": {
-      "instrument_key": "NSE_EQ|INE142M01025",
-      "exclude": false,
-      "isin": "INE142M01025",
-      "market_cap": 330911943815.1874
-    },
-    "ESCORTS": {
-      "instrument_key": "NSE_EQ|INE042A01014",
-      "exclude": false,
-      "isin": "INE042A01014",
-      "market_cap": 331853621723.8623
-    },
-    "HEXT": {
-      "instrument_key": "NSE_EQ|INE093A01041",
-      "exclude": false,
-      "isin": "INE093A01041",
-      "market_cap": 336056355761.4
-    },
-    "DALBHARAT": {
-      "instrument_key": "NSE_EQ|INE00R701025",
-      "exclude": false,
-      "isin": "INE00R701025",
-      "market_cap": 339150834657.1775
-    },
-    "STARHEALTH": {
-      "instrument_key": "NSE_EQ|INE575P01011",
-      "exclude": false,
-      "isin": "INE575P01011",
-      "market_cap": 329741336886.1199
-    },
-    "ITCHOTELS": {
-      "instrument_key": "NSE_EQ|INE379A01028",
-      "exclude": false,
-      "isin": "INE379A01028",
-      "market_cap": 336572075969.1175
-    },
-    "HFCL": {
-      "instrument_key": "NSE_EQ|INE548A01028",
-      "exclude": false,
-      "isin": "INE548A01028",
-      "market_cap": 362121592278.32117
-    },
-    "PWL": {
-      "instrument_key": "NSE_EQ|INE0LP301011",
-      "exclude": false,
-      "isin": "INE0LP301011",
-      "market_cap": 333429453082.2754
-    },
-    "TATAINVEST": {
-      "instrument_key": "NSE_EQ|INE672A01026",
-      "exclude": false,
-      "isin": "INE672A01026",
-      "market_cap": 320597105456.3672
-    },
-    "JUBLFOOD": {
-      "instrument_key": "NSE_EQ|INE797F01020",
-      "exclude": false,
-      "isin": "INE797F01020",
-      "market_cap": 318577551396.6731
-    },
-    "HONAUT": {
-      "instrument_key": "NSE_EQ|INE671A01010",
-      "exclude": false,
-      "isin": "INE671A01010",
-      "market_cap": 314789033220.0
-    },
-    "MINDSPACE": {
-      "instrument_key": "NSE_EQ|INE0CCU25019",
-      "exclude": false,
-      "isin": "INE0CCU25019",
-      "market_cap": 228427470898.92
-    },
-    "MANAPPURAM": {
-      "instrument_key": "NSE_EQ|INE522D01027",
-      "exclude": false,
-      "isin": "INE522D01027",
-      "market_cap": 316556266374.0
-    },
-    "CRISIL": {
-      "instrument_key": "NSE_EQ|INE007A01025",
-      "exclude": false,
-      "isin": "INE007A01025",
-      "market_cap": 353181417101.5
-    },
-    "IREDA": {
-      "instrument_key": "NSE_EQ|INE202E01016",
-      "exclude": false,
-      "isin": "INE202E01016",
-      "market_cap": 320814202232.50653
-    },
-    "UCOBANK": {
-      "instrument_key": "NSE_EQ|INE691A01018",
-      "exclude": false,
-      "isin": "INE691A01018",
-      "market_cap": 308347757206.9949
-    },
-    "KARURVYSYA": {
-      "instrument_key": "NSE_EQ|INE036D01028",
-      "exclude": false,
-      "isin": "INE036D01028",
-      "market_cap": 336013541304.86865
-    },
-    "LALPATHLAB": {
-      "instrument_key": "NSE_EQ|INE600L01024",
-      "exclude": false,
-      "isin": "INE600L01024",
-      "market_cap": 317992476882.2058
-    },
-    "STLTECH": {
-      "instrument_key": "NSE_EQ|INE089C01029",
-      "exclude": false,
-      "isin": "INE089C01029",
-      "market_cap": 356500234848.7306
-    },
-    "IKS": {
-      "instrument_key": "NSE_EQ|INE115Q01022",
-      "exclude": false,
-      "isin": "INE115Q01022",
-      "market_cap": 292032175410.4817
-    },
-    "RRKABEL": {
-      "instrument_key": "NSE_EQ|INE777K01022",
-      "exclude": false,
-      "isin": "INE777K01022",
-      "market_cap": 324590183771.72974
-    },
-    "WOCKPHARMA": {
-      "instrument_key": "NSE_EQ|INE049B01025",
-      "exclude": false,
-      "isin": "INE049B01025",
-      "market_cap": 300708003984.306
-    },
-    "BLUESTARCO": {
-      "instrument_key": "NSE_EQ|INE472A01039",
-      "exclude": false,
-      "isin": "INE472A01039",
-      "market_cap": 306518563992.3596
-    },
-    "SAILIFE": {
-      "instrument_key": "NSE_EQ|INE570L01029",
-      "exclude": false,
-      "isin": "INE570L01029",
-      "market_cap": 322313295266.1621
-    },
-    "KIRLOSENG": {
-      "instrument_key": "NSE_EQ|INE146L01010",
-      "exclude": false,
-      "isin": "INE146L01010",
-      "market_cap": 311165110913.6616
-    },
-    "ZFCVINDIA": {
-      "instrument_key": "NSE_EQ|INE342J01019",
-      "exclude": false,
-      "isin": "INE342J01019",
-      "market_cap": 289953668648.1094
-    },
-    "GRSE": {
-      "instrument_key": "NSE_EQ|INE382Z01011",
-      "exclude": false,
-      "isin": "INE382Z01011",
-      "market_cap": 289839464806.6406
-    },
-    "CHOLAHLDNG": {
-      "instrument_key": "NSE_EQ|INE149A01033",
-      "exclude": false,
-      "isin": "INE149A01033",
-      "market_cap": 276971756450.0
-    },
-    "PNBHOUSING": {
-      "instrument_key": "NSE_EQ|INE572E01012",
-      "exclude": false,
-      "isin": "INE572E01012",
-      "market_cap": 300446107776.0
-    },
-    "MRPL": {
-      "instrument_key": "NSE_EQ|INE103A01014",
-      "exclude": false,
-      "isin": "INE103A01014",
-      "market_cap": 300430479144.2358
-    },
-    "AEGISVOPAK": {
-      "instrument_key": "NSE_EQ|INE0INX01018",
-      "exclude": false,
-      "isin": "INE0INX01018",
-      "market_cap": 299268507941.54333
-    },
-    "NIACL": {
-      "instrument_key": "NSE_EQ|INE470Y01017",
-      "exclude": false,
-      "isin": "INE470Y01017",
-      "market_cap": 306148967041.0156
-    },
-    "ABSLAMC": {
-      "instrument_key": "NSE_EQ|INE404A01024",
-      "exclude": false,
-      "isin": "INE404A01024",
-      "market_cap": 297778823227.38354
-    },
-    "BIRET": {
-      "instrument_key": "NSE_EQ|INE0FDU25010",
-      "exclude": false,
-      "isin": "INE0FDU25010",
-      "market_cap": 218665310172.81
-    },
-    "NETWEB": {
-      "instrument_key": "NSE_EQ|INE0NT901020",
-      "exclude": false,
-      "isin": "INE0NT901020",
-      "market_cap": 305343896169.0
-    },
-    "CENTRALBK": {
-      "instrument_key": "NSE_EQ|INE483A01010",
-      "exclude": false,
-      "isin": "INE483A01010",
-      "market_cap": 274347967780.9702
-    },
-    "TVSHLTD": {
-      "instrument_key": "NSE_EQ|INE105A01035",
-      "exclude": false,
-      "isin": "INE105A01035",
-      "market_cap": 268237234832.0
-    },
-    "APOLLOTYRE": {
-      "instrument_key": "NSE_EQ|INE438A01022",
-      "exclude": false,
-      "isin": "INE438A01022",
-      "market_cap": 280043764283.7401
-    },
-    "SUMICHEM": {
-      "instrument_key": "NSE_EQ|INE258G01013",
-      "exclude": false,
-      "isin": "INE258G01013",
-      "market_cap": 256660743544.2876
-    },
-    "BANDHANBNK": {
-      "instrument_key": "NSE_EQ|INE545U01014",
-      "exclude": false,
-      "isin": "INE545U01014",
-      "market_cap": 262450066548.5553
-    },
-    "CDSL": {
-      "instrument_key": "NSE_EQ|INE736A01011",
-      "exclude": false,
-      "isin": "INE736A01011",
-      "market_cap": 290719000000.0
-    },
-    "GABRIEL": {
-      "instrument_key": "NSE_EQ|INE524A01029",
-      "exclude": false,
-      "isin": "INE524A01029",
-      "market_cap": 252783190458.70972
-    },
-    "SHYAMMETL": {
-      "instrument_key": "NSE_EQ|INE810G01011",
-      "exclude": false,
-      "isin": "INE810G01011",
-      "market_cap": 300036025212.0
-    },
-    "LICHSGFIN": {
-      "instrument_key": "NSE_EQ|INE115A01026",
-      "exclude": false,
-      "isin": "INE115A01026",
-      "market_cap": 294228712129.27246
-    },
-    "PPLPHARMA": {
-      "instrument_key": "NSE_EQ|INE0DK501011",
-      "exclude": false,
-      "isin": "INE0DK501011",
-      "market_cap": 282493929069.9646
-    },
-    "PGHH": {
-      "instrument_key": "NSE_EQ|INE179A01014",
-      "exclude": false,
-      "isin": "INE179A01014",
-      "market_cap": 255839290784.0
-    },
-    "CRAFTSMAN": {
-      "instrument_key": "NSE_EQ|INE00LO01017",
-      "exclude": false,
-      "isin": "INE00LO01017",
-      "market_cap": 294315834549.0
-    },
-    "RUBICON": {
-      "instrument_key": "NSE_EQ|INE506V01022",
-      "exclude": false,
-      "isin": "INE506V01022",
-      "market_cap": 300830860291.66113
-    },
-    "ITI": {
-      "instrument_key": "NSE_EQ|INE248A01017",
-      "exclude": false,
-      "isin": "INE248A01017",
-      "market_cap": 258573883984.28595
-    },
-    "ACUTAAS": {
-      "instrument_key": "NSE_EQ|INE00FF01025",
-      "exclude": false,
-      "isin": "INE00FF01025",
-      "market_cap": 259883506562.21338
-    },
-    "ACMESOLAR": {
-      "instrument_key": "NSE_EQ|INE622W01025",
-      "exclude": false,
-      "isin": "INE622W01025",
-      "market_cap": 285129865371.92175
-    },
-    "SJVN": {
-      "instrument_key": "NSE_EQ|INE002L01015",
-      "exclude": false,
-      "isin": "INE002L01015",
-      "market_cap": 255122295565.33014
-    },
-    "ANGELONE": {
-      "instrument_key": "NSE_EQ|INE732I01021",
-      "exclude": false,
-      "isin": "INE732I01021",
-      "market_cap": 257248689830.98877
-    },
-    "REDINGTON": {
-      "instrument_key": "NSE_EQ|INE891D01026",
-      "exclude": false,
-      "isin": "INE891D01026",
-      "market_cap": 273308345849.17245
-    },
-    "METROBRAND": {
-      "instrument_key": "NSE_EQ|INE317I01021",
-      "exclude": false,
-      "isin": "INE317I01021",
-      "market_cap": 250226509928.4981
-    },
-    "SUNDRMFAST": {
-      "instrument_key": "NSE_EQ|INE387A01021",
-      "exclude": false,
-      "isin": "INE387A01021",
-      "market_cap": 253141638283.52563
-    },
-    "AMBER": {
-      "instrument_key": "NSE_EQ|INE371P01015",
-      "exclude": false,
-      "isin": "INE371P01015",
-      "market_cap": 264790394636.0
-    },
-    "NXST": {
-      "instrument_key": "NSE_EQ|INE0NDH25011",
-      "exclude": false,
-      "isin": "INE0NDH25011",
-      "market_cap": 224583600000.0
-    },
-    "DATAPATTNS": {
-      "instrument_key": "NSE_EQ|INE0IX101010",
-      "exclude": false,
-      "isin": "INE0IX101010",
-      "market_cap": 252778827763.16895
-    },
-    "AWL": {
-      "instrument_key": "NSE_EQ|INE699H01024",
-      "exclude": false,
-      "isin": "INE699H01024",
-      "market_cap": 251103518199.0033
-    },
-    "CREDITACC": {
-      "instrument_key": "NSE_EQ|INE741K01010",
-      "exclude": false,
-      "isin": "INE741K01010",
-      "market_cap": 223289615154.0725
-    },
-    "ACC": {
-      "instrument_key": "NSE_EQ|INE012A01025",
-      "exclude": false,
-      "isin": "INE012A01025",
-      "market_cap": 238921743884.19995
-    },
-    "TIMKEN": {
-      "instrument_key": "NSE_EQ|INE325A01013",
-      "exclude": false,
-      "isin": "INE325A01013",
-      "market_cap": 241422055991.9795
-    },
-    "KAYNES": {
-      "instrument_key": "NSE_EQ|INE918Z01012",
-      "exclude": false,
-      "isin": "INE918Z01012",
-      "market_cap": 242034578845.5
-    },
-    "SANSERA": {
-      "instrument_key": "NSE_EQ|INE953O01021",
-      "exclude": false,
-      "isin": "INE953O01021",
-      "market_cap": 243561125904.0
-    },
-    "FORCEMOT": {
-      "instrument_key": "NSE_EQ|INE451A01017",
-      "exclude": false,
-      "isin": "INE451A01017",
-      "market_cap": 233509715164.0
-    },
-    "NBCC": {
-      "instrument_key": "NSE_EQ|INE095N01031",
-      "exclude": false,
-      "isin": "INE095N01031",
-      "market_cap": 230039991760.2539
-    },
-    "GODIGIT": {
-      "instrument_key": "NSE_EQ|INE03JT01014",
-      "exclude": false,
-      "isin": "INE03JT01014",
-      "market_cap": 241063122333.25
-    },
-    "GRINDWELL": {
-      "instrument_key": "NSE_EQ|INE536A01023",
-      "exclude": false,
-      "isin": "INE536A01023",
-      "market_cap": 219590981406.25
-    },
-    "KIOCL": {
-      "instrument_key": "NSE_EQ|INE880L01014",
-      "exclude": false,
-      "isin": "INE880L01014",
-      "market_cap": 233346041111.98663
-    },
-    "DEEPAKNTR": {
-      "instrument_key": "NSE_EQ|INE288B01029",
-      "exclude": false,
-      "isin": "INE288B01029",
-      "market_cap": 243161520154.61646
-    },
-    "TATAELXSI": {
-      "instrument_key": "NSE_EQ|INE670A01012",
-      "exclude": false,
-      "isin": "INE670A01012",
-      "market_cap": 226645802918.0
-    },
-    "AFFLE": {
-      "instrument_key": "NSE_EQ|INE00WC01027",
-      "exclude": false,
-      "isin": "INE00WC01027",
-      "market_cap": 220272876424.05383
-    },
-    "IRB": {
-      "instrument_key": "NSE_EQ|INE821I01022",
-      "exclude": false,
-      "isin": "INE821I01022",
-      "market_cap": 233709304607.39136
-    },
-    "TDPOWERSYS": {
-      "instrument_key": "NSE_EQ|INE419M01027",
-      "exclude": false,
-      "isin": "INE419M01027",
-      "market_cap": 236857918908.82935
-    },
-    "KPIL": {
-      "instrument_key": "NSE_EQ|INE220B01022",
-      "exclude": false,
-      "isin": "INE220B01022",
-      "market_cap": 240516057955.6516
-    },
-    "BELRISE": {
-      "instrument_key": "NSE_EQ|INE894V01022",
-      "exclude": false,
-      "isin": "INE894V01022",
-      "market_cap": 223150958138.75122
-    },
-    "CEMPRO": {
-      "instrument_key": "NSE_EQ|INE686A01026",
-      "exclude": false,
-      "isin": "INE686A01026",
-      "market_cap": 213720929060.3672
-    },
-    "URBANCO": {
-      "instrument_key": "NSE_EQ|INE0CAZ01013",
-      "exclude": false,
-      "isin": "INE0CAZ01013",
-      "market_cap": 246841911025.9674
-    },
-    "EMMVEE": {
-      "instrument_key": "NSE_EQ|INE1C6T01020",
-      "exclude": false,
-      "isin": "INE1C6T01020",
-      "market_cap": 221031151785.25
-    },
-    "DIACABS": {
-      "instrument_key": "NSE_EQ|INE989C01038",
-      "exclude": false,
-      "isin": "INE989C01038",
-      "market_cap": 203703006686.33606
-    },
-    "CARBORUNIV": {
-      "instrument_key": "NSE_EQ|INE120A01034",
-      "exclude": false,
-      "isin": "INE120A01034",
-      "market_cap": 209651175092.0
-    },
-    "HATSUN": {
-      "instrument_key": "NSE_EQ|INE473B01035",
-      "exclude": false,
-      "isin": "INE473B01035",
-      "market_cap": 262508833838.0
-    },
-    "CGCL": {
-      "instrument_key": "NSE_EQ|INE180C01042",
-      "exclude": false,
-      "isin": "INE180C01042",
-      "market_cap": 241404423193.27826
-    },
-    "AADHARHFC": {
-      "instrument_key": "NSE_EQ|INE883F01010",
-      "exclude": false,
-      "isin": "INE883F01010",
-      "market_cap": 208783595663.8531
-    },
-    "TENNIND": {
-      "instrument_key": "NSE_EQ|INE19RI01016",
-      "exclude": false,
-      "isin": "INE19RI01016",
-      "market_cap": 211972988013.6104
-    },
-    "MTARTECH": {
-      "instrument_key": "NSE_EQ|INE864I01014",
-      "exclude": false,
-      "isin": "INE864I01014",
-      "market_cap": 213671498881.5
-    },
-    "AETHER": {
-      "instrument_key": "NSE_EQ|INE0BWX01014",
-      "exclude": false,
-      "isin": "INE0BWX01014",
-      "market_cap": 223473866145.6482
-    },
-    "RAMCOCEM": {
-      "instrument_key": "NSE_EQ|INE331A01037",
-      "exclude": false,
-      "isin": "INE331A01037",
-      "market_cap": 206838529064.14307
-    },
-    "PFOCUS": {
-      "instrument_key": "NSE_EQ|INE367G01038",
-      "exclude": false,
-      "isin": "INE367G01038",
-      "market_cap": 223118716620.0
-    },
-    "IFCI": {
-      "instrument_key": "NSE_EQ|INE039A01010",
-      "exclude": false,
-      "isin": "INE039A01010",
-      "market_cap": 235105874278.73636
-    },
-    "LMW": {
-      "instrument_key": "NSE_EQ|INE269B01029",
-      "exclude": false,
-      "isin": "INE269B01029",
-      "market_cap": 203094513000.0
-    },
-    "ATUL": {
-      "instrument_key": "NSE_EQ|INE100A01010",
-      "exclude": false,
-      "isin": "INE100A01010",
-      "market_cap": 189958203260.0
-    },
-    "SAGILITY": {
-      "instrument_key": "NSE_EQ|INE0W2G01015",
-      "exclude": false,
-      "isin": "INE0W2G01015",
-      "market_cap": 217447708355.42014
-    },
-    "SHRIPISTON": {
-      "instrument_key": "NSE_EQ|INE526E01018",
-      "exclude": false,
-      "isin": "INE526E01018",
-      "market_cap": 213293364970.21875
-    },
-    "HAPPYFORGE": {
-      "instrument_key": "NSE_EQ|INE330T01021",
-      "exclude": false,
-      "isin": "INE330T01021",
-      "market_cap": 228434278556.92676
-    },
-    "CHENNPETRO": {
-      "instrument_key": "NSE_EQ|INE178A01016",
-      "exclude": false,
-      "isin": "INE178A01016",
-      "market_cap": 206540111800.0
-    },
-    "GUJENERGY": {
-      "instrument_key": "NSE_EQ|INE844O01030",
-      "exclude": false,
-      "isin": "INE844O01030",
-      "market_cap": 238592107763.9533
+    "63MOONS": {
+      "instrument_key": "NSE_EQ|INE111B01023",
+      "exclude": false,
+      "isin": "INE111B01023",
+      "market_cap": 40159748359.86786
     },
     "AARTIIND": {
       "instrument_key": "NSE_EQ|INE769A01020",
       "exclude": false,
       "isin": "INE769A01020",
-      "market_cap": 190377097015.1178
+      "market_cap": 178189488918.75
     },
-    "BRIGADE": {
-      "instrument_key": "NSE_EQ|INE791I01019",
+    "AARTIPHARM": {
+      "instrument_key": "NSE_EQ|INE0LRU01027",
       "exclude": false,
-      "isin": "INE791I01019",
-      "market_cap": 210407342729.9513
+      "isin": "INE0LRU01027",
+      "market_cap": 78442571128.71869
     },
-    "SUNTV": {
-      "instrument_key": "NSE_EQ|INE424H01027",
+    "AAVAS": {
+      "instrument_key": "NSE_EQ|INE216P01012",
       "exclude": false,
-      "isin": "INE424H01027",
-      "market_cap": 182126204727.69836
+      "isin": "INE216P01012",
+      "market_cap": 102963683609.5
     },
-    "FINCABLES": {
-      "instrument_key": "NSE_EQ|INE235A01022",
+    "ACMESOLAR": {
+      "instrument_key": "NSE_EQ|INE622W01025",
       "exclude": false,
-      "isin": "INE235A01022",
-      "market_cap": 190914191831.24146
+      "isin": "INE622W01025",
+      "market_cap": 290744869435.0391
     },
-    "PINELABS": {
-      "instrument_key": "NSE_EQ|INE15B701018",
+    "AETHER": {
+      "instrument_key": "NSE_EQ|INE0BWX01014",
       "exclude": false,
-      "isin": "INE15B701018",
-      "market_cap": 184490369305.8409
+      "isin": "INE0BWX01014",
+      "market_cap": 214514736608.1482
     },
-    "CAMS": {
-      "instrument_key": "NSE_EQ|INE596I01020",
+    "AFFLE": {
+      "instrument_key": "NSE_EQ|INE00WC01027",
       "exclude": false,
-      "isin": "INE596I01020",
-      "market_cap": 186719758352.0
+      "isin": "INE00WC01027",
+      "market_cap": 229744715648.44617
     },
-    "TRITURBINE": {
-      "instrument_key": "NSE_EQ|INE152M01016",
+    "AIAENG": {
+      "instrument_key": "NSE_EQ|INE212H01026",
       "exclude": false,
-      "isin": "INE152M01016",
-      "market_cap": 183904258531.5
+      "isin": "INE212H01026",
+      "market_cap": 394147923845.3174
     },
-    "HBLENGINE": {
-      "instrument_key": "NSE_EQ|INE292B01021",
+    "AJANTPHARM": {
+      "instrument_key": "NSE_EQ|INE031B01049",
       "exclude": false,
-      "isin": "INE292B01021",
-      "market_cap": 182726911786.92737
+      "isin": "INE031B01049",
+      "market_cap": 438281268574.5703
     },
-    "JYOTICNC": {
-      "instrument_key": "NSE_EQ|INE980O01024",
+    "ALKYLAMINE": {
+      "instrument_key": "NSE_EQ|INE150B01039",
       "exclude": false,
-      "isin": "INE980O01024",
-      "market_cap": 224944178701.27832
+      "isin": "INE150B01039",
+      "market_cap": 102890761773.52808
     },
-    "SARDAEN": {
-      "instrument_key": "NSE_EQ|INE385C01021",
+    "ANGELONE": {
+      "instrument_key": "NSE_EQ|INE732I01021",
       "exclude": false,
-      "isin": "INE385C01021",
-      "market_cap": 175151105951.97083
+      "isin": "INE732I01021",
+      "market_cap": 277304140468.0
     },
-    "GMDCLTD": {
-      "instrument_key": "NSE_EQ|INE131A01031",
+    "APARINDS": {
+      "instrument_key": "NSE_EQ|INE372A01015",
       "exclude": false,
-      "isin": "INE131A01031",
-      "market_cap": 178795500000.0
+      "isin": "INE372A01015",
+      "market_cap": 733561471903.0
     },
-    "FSL": {
-      "instrument_key": "NSE_EQ|INE684F01012",
+    "APTUS": {
+      "instrument_key": "NSE_EQ|INE852O01025",
       "exclude": false,
-      "isin": "INE684F01012",
-      "market_cap": 183682380756.0
+      "isin": "INE852O01025",
+      "market_cap": 127808684698.82556
     },
-    "CASTROLIND": {
-      "instrument_key": "NSE_EQ|INE172A01027",
+    "ARIHANTCAP": {
+      "instrument_key": "NSE_EQ|INE420B01036",
       "exclude": false,
-      "isin": "INE172A01027",
-      "market_cap": 183996550097.66675
-    },
-    "GESHIP": {
-      "instrument_key": "NSE_EQ|INE017A01032",
-      "exclude": false,
-      "isin": "INE017A01032",
-      "market_cap": 189252145136.0736
-    },
-    "BAYERCROP": {
-      "instrument_key": "NSE_EQ|INE462A01022",
-      "exclude": false,
-      "isin": "INE462A01022",
-      "market_cap": 179211090448.07617
-    },
-    "CHALET": {
-      "instrument_key": "NSE_EQ|INE427F01016",
-      "exclude": false,
-      "isin": "INE427F01016",
-      "market_cap": 196547228982.5
-    },
-    "TRAVELFOOD": {
-      "instrument_key": "NSE_EQ|INE103V01028",
-      "exclude": false,
-      "isin": "INE103V01028",
-      "market_cap": 167298784422.0
-    },
-    "OLAELEC": {
-      "instrument_key": "NSE_EQ|INE0LXG01040",
-      "exclude": false,
-      "isin": "INE0LXG01040",
-      "market_cap": 179000747861.92114
-    },
-    "CHOICEIN": {
-      "instrument_key": "NSE_EQ|INE102B01014",
-      "exclude": false,
-      "isin": "INE102B01014",
-      "market_cap": 172584957269.4397
-    },
-    "ONESOURCE": {
-      "instrument_key": "NSE_EQ|INE013P01021",
-      "exclude": false,
-      "isin": "INE013P01021",
-      "market_cap": 175208712958.53113
-    },
-    "CHAMBLFERT": {
-      "instrument_key": "NSE_EQ|INE085A01013",
-      "exclude": false,
-      "isin": "INE085A01013",
-      "market_cap": 165188937162.3249
-    },
-    "INOXINDIA": {
-      "instrument_key": "NSE_EQ|INE616N01034",
-      "exclude": false,
-      "isin": "INE616N01034",
-      "market_cap": 196584655786.37695
-    },
-    "EMAMILTD": {
-      "instrument_key": "NSE_EQ|INE548C01032",
-      "exclude": false,
-      "isin": "INE548C01032",
-      "market_cap": 164407722335.81543
-    },
-    "AZAD": {
-      "instrument_key": "NSE_EQ|INE02IJ01035",
-      "exclude": false,
-      "isin": "INE02IJ01035",
-      "market_cap": 183689854768.30542
-    },
-    "SAMMAANCAP": {
-      "instrument_key": "NSE_EQ|INE148I01020",
-      "exclude": false,
-      "isin": "INE148I01020",
-      "market_cap": 169017781525.0572
-    },
-    "TBOTEK": {
-      "instrument_key": "NSE_EQ|INE673O01025",
-      "exclude": false,
-      "isin": "INE673O01025",
-      "market_cap": 183924733203.8308
-    },
-    "JSWCEMENT": {
-      "instrument_key": "NSE_EQ|INE718I01012",
-      "exclude": false,
-      "isin": "INE718I01012",
-      "market_cap": 168455541245.0
-    },
-    "PGEL": {
-      "instrument_key": "NSE_EQ|INE457L01029",
-      "exclude": false,
-      "isin": "INE457L01029",
-      "market_cap": 163274480883.74854
-    },
-    "VTL": {
-      "instrument_key": "NSE_EQ|INE825A01020",
-      "exclude": false,
-      "isin": "INE825A01020",
-      "market_cap": 174351270806.35986
-    },
-    "TATACHEM": {
-      "instrument_key": "NSE_EQ|INE092A01019",
-      "exclude": false,
-      "isin": "INE092A01019",
-      "market_cap": 161413571521.1643
-    },
-    "INDIGRID": {
-      "instrument_key": "NSE_EQ|INE219X23014",
-      "exclude": false,
-      "isin": "INE219X23014",
-      "market_cap": 133416214543.14
-    },
-    "THELEELA": {
-      "instrument_key": "NSE_EQ|INE0AQ201015",
-      "exclude": false,
-      "isin": "INE0AQ201015",
-      "market_cap": 192142656954.0315
-    },
-    "ALIVUS": {
-      "instrument_key": "NSE_EQ|INE03Q201024",
-      "exclude": false,
-      "isin": "INE03Q201024",
-      "market_cap": 177245133482.9004
-    },
-    "CMPDI": {
-      "instrument_key": "NSE_EQ|INE05HV01027",
-      "exclude": false,
-      "isin": "INE05HV01027"
-    },
-    "ASTRAMICRO": {
-      "instrument_key": "NSE_EQ|INE386C01029",
-      "exclude": false,
-      "isin": "INE386C01029",
-      "market_cap": 160115263809.19336
-    },
-    "THANGAMAYL": {
-      "instrument_key": "NSE_EQ|INE085J01014",
-      "exclude": false,
-      "isin": "INE085J01014",
-      "market_cap": 165092154541.5
-    },
-    "COHANCE": {
-      "instrument_key": "NSE_EQ|INE03QK01018",
-      "exclude": false,
-      "isin": "INE03QK01018",
-      "market_cap": 175994771800.0
-    },
-    "ABDL": {
-      "instrument_key": "NSE_EQ|INE552Z01027",
-      "exclude": false,
-      "isin": "INE552Z01027",
-      "market_cap": 172637108611.63055
-    },
-    "AEQUS": {
-      "instrument_key": "NSE_EQ|INE947N01017",
-      "exclude": false,
-      "isin": "INE947N01017",
-      "market_cap": 162056753587.8325
-    },
-    "PSB": {
-      "instrument_key": "NSE_EQ|INE608A01012",
-      "exclude": false,
-      "isin": "INE608A01012",
-      "market_cap": 160218313726.24982
-    },
-    "KPITTECH": {
-      "instrument_key": "NSE_EQ|INE04I401011",
-      "exclude": false,
-      "isin": "INE04I401011",
-      "market_cap": 160614059210.0
-    },
-    "RATNAMANI": {
-      "instrument_key": "NSE_EQ|INE703B01027",
-      "exclude": false,
-      "isin": "INE703B01027",
-      "market_cap": 182596676044.92188
-    },
-    "GRWRHITECH": {
-      "instrument_key": "NSE_EQ|INE291A01017",
-      "exclude": false,
-      "isin": "INE291A01017",
-      "market_cap": 167493944543.0
-    },
-    "DCMSHRIRAM": {
-      "instrument_key": "NSE_EQ|INE499A01024",
-      "exclude": false,
-      "isin": "INE499A01024",
-      "market_cap": 159562404126.2351
-    },
-    "APLLTD": {
-      "instrument_key": "NSE_EQ|INE901L01018",
-      "exclude": false,
-      "isin": "INE901L01018",
-      "market_cap": 165869787388.4956
-    },
-    "NAVA": {
-      "instrument_key": "NSE_EQ|INE725A01030",
-      "exclude": false,
-      "isin": "INE725A01030",
-      "market_cap": 159674972752.38855
-    },
-    "FIVESTAR": {
-      "instrument_key": "NSE_EQ|INE128S01021",
-      "exclude": false,
-      "isin": "INE128S01021",
-      "market_cap": 158840988139.04663
-    },
-    "ZYDUSWELL": {
-      "instrument_key": "NSE_EQ|INE768C01028",
-      "exclude": false,
-      "isin": "INE768C01028",
-      "market_cap": 168243384852.20215
-    },
-    "KFINTECH": {
-      "instrument_key": "NSE_EQ|INE138Y01010",
-      "exclude": false,
-      "isin": "INE138Y01010",
-      "market_cap": 162067574062.5
-    },
-    "NATCOPHARM": {
-      "instrument_key": "NSE_EQ|INE987B01026",
-      "exclude": false,
-      "isin": "INE987B01026",
-      "market_cap": 154877098226.31836
-    },
-    "SHILPAMED": {
-      "instrument_key": "NSE_EQ|INE790G01031",
-      "exclude": false,
-      "isin": "INE790G01031",
-      "market_cap": 174009144082.67334
-    },
-    "AGARWALEYE": {
-      "instrument_key": "NSE_EQ|INE943P01029",
-      "exclude": false,
-      "isin": "INE943P01029",
-      "market_cap": 161249270213.02173
-    },
-    "CROMPTON": {
-      "instrument_key": "NSE_EQ|INE299U01018",
-      "exclude": false,
-      "isin": "INE299U01018",
-      "market_cap": 148808731542.6445
-    },
-    "SYNGENE": {
-      "instrument_key": "NSE_EQ|INE398R01022",
-      "exclude": false,
-      "isin": "INE398R01022",
-      "market_cap": 161826389760.53137
-    },
-    "GPIL": {
-      "instrument_key": "NSE_EQ|INE177H01039",
-      "exclude": false,
-      "isin": "INE177H01039",
-      "market_cap": 158361922818.85895
-    },
-    "FINEORG": {
-      "instrument_key": "NSE_EQ|INE686Y01026",
-      "exclude": false,
-      "isin": "INE686Y01026",
-      "market_cap": 161133503868.0
-    },
-    "WELSPUNLIV": {
-      "instrument_key": "NSE_EQ|INE192B01031",
-      "exclude": false,
-      "isin": "INE192B01031",
-      "market_cap": 188104590849.63947
-    },
-    "BHARATCOAL": {
-      "instrument_key": "NSE_EQ|INE05XR01022",
-      "exclude": false,
-      "isin": "INE05XR01022"
-    },
-    "ABREL": {
-      "instrument_key": "NSE_EQ|INE055A01016",
-      "exclude": false,
-      "isin": "INE055A01016",
-      "market_cap": 150054134308.0
-    },
-    "BEML": {
-      "instrument_key": "NSE_EQ|INE258A01024",
-      "exclude": false,
-      "isin": "INE258A01024",
-      "market_cap": 164095983733.1543
-    },
-    "SHAILY": {
-      "instrument_key": "NSE_EQ|INE151G01028",
-      "exclude": false,
-      "isin": "INE151G01028",
-      "market_cap": 150234280788.26172
-    },
-    "CIEINDIA": {
-      "instrument_key": "NSE_EQ|INE536H01010",
-      "exclude": false,
-      "isin": "INE536H01010",
-      "market_cap": 148273787365.8942
-    },
-    "BIKAJI": {
-      "instrument_key": "NSE_EQ|INE00E101023",
-      "exclude": false,
-      "isin": "INE00E101023",
-      "market_cap": 150015585059.25293
-    },
-    "PARADEEP": {
-      "instrument_key": "NSE_EQ|INE088F01024",
-      "exclude": false,
-      "isin": "INE088F01024",
-      "market_cap": 163577318872.73788
-    },
-    "NIVABUPA": {
-      "instrument_key": "NSE_EQ|INE995S01015",
-      "exclude": false,
-      "isin": "INE995S01015",
-      "market_cap": 152225764701.5677
-    },
-    "MAHSCOOTER": {
-      "instrument_key": "NSE_EQ|INE288A01013",
-      "exclude": false,
-      "isin": "INE288A01013",
-      "market_cap": 156514238760.0
-    },
-    "CONCORDBIO": {
-      "instrument_key": "NSE_EQ|INE338H01029",
-      "exclude": false,
-      "isin": "INE338H01029",
-      "market_cap": 155281836705.4131
-    },
-    "VIJAYA": {
-      "instrument_key": "NSE_EQ|INE043W01024",
-      "exclude": false,
-      "isin": "INE043W01024",
-      "market_cap": 154393574785.0
-    },
-    "CCL": {
-      "instrument_key": "NSE_EQ|INE421D01022",
-      "exclude": false,
-      "isin": "INE421D01022",
-      "market_cap": 146682203178.6427
-    },
-    "KIRLOSBROS": {
-      "instrument_key": "NSE_EQ|INE732A01036",
-      "exclude": false,
-      "isin": "INE732A01036",
-      "market_cap": 149789060991.18896
-    },
-    "GSPL": {
-      "instrument_key": "",
-      "exclude": false,
-      "isin": "",
-      "market_cap": 156286551152.0
-    },
-    "MARKSANS": {
-      "instrument_key": "NSE_EQ|INE750C01026",
-      "exclude": false,
-      "isin": "INE750C01026",
-      "market_cap": 146099988944.508
+      "isin": "INE420B01036",
+      "market_cap": 8621015427.255249
     },
     "ARVIND": {
       "instrument_key": "NSE_EQ|INE034A01011",
       "exclude": false,
       "isin": "INE034A01011",
-      "market_cap": 151553828331.38306
+      "market_cap": 153009255664.30847
     },
-    "IGIL": {
-      "instrument_key": "NSE_EQ|INE0Q9301021",
+    "ARVINDFASN": {
+      "instrument_key": "NSE_EQ|INE955V01021",
       "exclude": false,
-      "isin": "INE0Q9301021",
-      "market_cap": 146826256716.0
+      "isin": "INE955V01021",
+      "market_cap": 58926947901.75
     },
-    "CEATLTD": {
-      "instrument_key": "NSE_EQ|INE482A01020",
+    "ARVSMART": {
+      "instrument_key": "NSE_EQ|INE034S01021",
       "exclude": false,
-      "isin": "INE482A01020",
-      "market_cap": 137538400843.29785
+      "isin": "INE034S01021",
+      "market_cap": 29506227030.800354
     },
-    "APOLLO": {
-      "instrument_key": "NSE_EQ|INE713T01028",
+    "ASHAPURMIN": {
+      "instrument_key": "NSE_EQ|INE348A01023",
       "exclude": false,
-      "isin": "INE713T01028",
-      "market_cap": 141022014804.0
+      "isin": "INE348A01023",
+      "market_cap": 51679619018.0
     },
-    "BBOX": {
-      "instrument_key": "NSE_EQ|INE676A01027",
+    "ASHOKA": {
+      "instrument_key": "NSE_EQ|INE442H01029",
       "exclude": false,
-      "isin": "INE676A01027",
-      "market_cap": 127862549807.70905
+      "isin": "INE442H01029",
+      "market_cap": 32454411288.709854
     },
-    "JBMA": {
-      "instrument_key": "NSE_EQ|INE927D01051",
+    "ASTRAL": {
+      "instrument_key": "NSE_EQ|INE006I01046",
       "exclude": false,
-      "isin": "INE927D01051",
-      "market_cap": 147063952294.61426
+      "isin": "INE006I01046",
+      "market_cap": 400476784866.41626
     },
-    "SHADOWFAX": {
-      "instrument_key": "NSE_EQ|INE12UN01015",
+    "ATUL": {
+      "instrument_key": "NSE_EQ|INE100A01010",
       "exclude": false,
-      "isin": "INE12UN01015",
-      "market_cap": 150907108737.43835
+      "isin": "INE100A01010",
+      "market_cap": 186042449845.0
     },
-    "CLEANMAX": {
-      "instrument_key": "NSE_EQ|INE647U01026",
+    "ATULAUTO": {
+      "instrument_key": "NSE_EQ|INE951D01028",
       "exclude": false,
-      "isin": "INE647U01026",
-      "market_cap": 146530326915.0
+      "isin": "INE951D01028",
+      "market_cap": 12801665125.239258
     },
-    "LTFOODS": {
-      "instrument_key": "NSE_EQ|INE818H01020",
+    "AUBANK": {
+      "instrument_key": "NSE_EQ|INE949L01017",
       "exclude": false,
-      "isin": "INE818H01020",
-      "market_cap": 151749536528.0
+      "isin": "INE949L01017",
+      "market_cap": 793270309810.8651
     },
-    "INGERRAND": {
-      "instrument_key": "NSE_EQ|INE177A01018",
+    "AURIONPRO": {
+      "instrument_key": "NSE_EQ|INE132H01018",
       "exclude": false,
-      "isin": "INE177A01018",
-      "market_cap": 151336992000.0
+      "isin": "INE132H01018",
+      "market_cap": 36987545094.98657
     },
-    "VOGL": {
-      "instrument_key": "NSE_EQ|INE704J01044",
+    "AWFIS": {
+      "instrument_key": "NSE_EQ|INE108V01019",
       "exclude": false,
-      "isin": "INE704J01044",
-      "market_cap": 147498998638.0249
+      "isin": "INE108V01019",
+      "market_cap": 18273659981.887024
     },
-    "JSWDULUX": {
-      "instrument_key": "NSE_EQ|INE133A01011",
+    "AZAD": {
+      "instrument_key": "NSE_EQ|INE02IJ01035",
       "exclude": false,
-      "isin": "INE133A01011",
-      "market_cap": 143151418580.3037
+      "isin": "INE02IJ01035",
+      "market_cap": 185995419840.0
     },
-    "VISL": {
-      "instrument_key": "NSE_EQ|INE1CLE01013",
+    "BALRAMCHIN": {
+      "instrument_key": "NSE_EQ|INE119A01028",
       "exclude": false,
-      "isin": "INE1CLE01013",
-      "market_cap": 138740566472.32642
+      "isin": "INE119A01028",
+      "market_cap": 148710717605.82275
     },
-    "FRACTAL": {
-      "instrument_key": "NSE_EQ|INE212S01015",
+    "BANCOINDIA": {
+      "instrument_key": "NSE_EQ|INE213C01025",
       "exclude": false,
-      "isin": "INE212S01015",
-      "market_cap": 142352717614.4165
+      "isin": "INE213C01025",
+      "market_cap": 89519890712.87842
     },
-    "JNPR": {
-      "instrument_key": "NSE_EQ|INE05C901015",
+    "BATAINDIA": {
+      "instrument_key": "NSE_EQ|INE176A01028",
       "exclude": false,
-      "isin": "INE05C901015",
-      "market_cap": 149276744731.59088
+      "isin": "INE176A01028",
+      "market_cap": 85997773876.1206
     },
-    "VEDPOWER": {
-      "instrument_key": "NSE_EQ|INE694L01019",
+    "BECTORFOOD": {
+      "instrument_key": "NSE_EQ|INE495P01020",
       "exclude": false,
-      "isin": "INE694L01019",
-      "market_cap": 135981751154.96265
+      "isin": "INE495P01020",
+      "market_cap": 70700995220.61322
     },
-    "VGUARD": {
-      "instrument_key": "NSE_EQ|INE951I01027",
+    "BLS": {
+      "instrument_key": "NSE_EQ|INE153T01027",
       "exclude": false,
-      "isin": "INE951I01027",
-      "market_cap": 149875471084.60724
+      "isin": "INE153T01027",
+      "market_cap": 98230360535.23375
     },
-    "CANHLIFE": {
-      "instrument_key": "NSE_EQ|INE01TY01017",
+    "BLUEDART": {
+      "instrument_key": "NSE_EQ|INE233B01017",
       "exclude": false,
-      "isin": "INE01TY01017",
-      "market_cap": 146083218796.91315
+      "isin": "INE233B01017",
+      "market_cap": 118279000768.83789
     },
-    "UJJIVANSFB": {
-      "instrument_key": "NSE_EQ|INE551W01018",
+    "BOMDYEING": {
+      "instrument_key": "NSE_EQ|INE032A01023",
       "exclude": false,
-      "isin": "INE551W01018",
-      "market_cap": 127356612779.13478
+      "isin": "INE032A01023",
+      "market_cap": 23167019354.823303
     },
-    "TI": {
-      "instrument_key": "NSE_EQ|INE133E01013",
+    "BORORENEW": {
+      "instrument_key": "NSE_EQ|INE666D01022",
       "exclude": false,
-      "isin": "INE133E01013",
-      "market_cap": 134881122219.72198
+      "isin": "INE666D01022",
+      "market_cap": 75225594568.23807
+    },
+    "BRIGADE": {
+      "instrument_key": "NSE_EQ|INE791I01019",
+      "exclude": false,
+      "isin": "INE791I01019",
+      "market_cap": 220893471177.75
+    },
+    "BSE": {
+      "instrument_key": "NSE_EQ|INE118H01025",
+      "exclude": false,
+      "isin": "INE118H01025",
+      "market_cap": 1402729179389.2573
+    },
+    "BSOFT": {
+      "instrument_key": "NSE_EQ|INE836A01035",
+      "exclude": false,
+      "isin": "INE836A01035",
+      "market_cap": 78972326907.56982
+    },
+    "CAMPUS": {
+      "instrument_key": "NSE_EQ|INE278Y01022",
+      "exclude": false,
+      "isin": "INE278Y01022",
+      "market_cap": 67142548851.92905
+    },
+    "CAMS": {
+      "instrument_key": "NSE_EQ|INE596I01020",
+      "exclude": false,
+      "isin": "INE596I01020",
+      "market_cap": 183988485291.0
+    },
+    "CANFINHOME": {
+      "instrument_key": "NSE_EQ|INE477A01020",
+      "exclude": false,
+      "isin": "INE477A01020",
+      "market_cap": 107262679154.62775
+    },
+    "CAPACITE": {
+      "instrument_key": "NSE_EQ|INE264T01014",
+      "exclude": false,
+      "isin": "INE264T01014",
+      "market_cap": 17579027951.26358
+    },
+    "CAPLIPOINT": {
+      "instrument_key": "NSE_EQ|INE475E01026",
+      "exclude": false,
+      "isin": "INE475E01026",
+      "market_cap": 213585257167.3828
+    },
+    "CARYSIL": {
+      "instrument_key": "NSE_EQ|INE482D01024",
+      "exclude": false,
+      "isin": "INE482D01024",
+      "market_cap": 31852875153.79956
+    },
+    "CDSL": {
+      "instrument_key": "NSE_EQ|INE736A01011",
+      "exclude": false,
+      "isin": "INE736A01011",
+      "market_cap": 296278394897.46094
+    },
+    "CERA": {
+      "instrument_key": "NSE_EQ|INE739E01017",
+      "exclude": false,
+      "isin": "INE739E01017",
+      "market_cap": 73791500160.0
+    },
+    "CHOICEIN": {
+      "instrument_key": "NSE_EQ|INE102B01014",
+      "exclude": false,
+      "isin": "INE102B01014",
+      "market_cap": 168541558355.5603
+    },
+    "CHOLAFIN": {
+      "instrument_key": "NSE_EQ|INE121A08PJ0",
+      "exclude": false,
+      "isin": "INE121A08PJ0",
+      "market_cap": 1565405894988.0
+    },
+    "CHOLAHLDNG": {
+      "instrument_key": "NSE_EQ|INE149A01033",
+      "exclude": false,
+      "isin": "INE149A01033",
+      "market_cap": 285365399832.5786
+    },
+    "CLEAN": {
+      "instrument_key": "NSE_EQ|INE227W01023",
+      "exclude": false,
+      "isin": "INE227W01023",
+      "market_cap": 88752553943.63641
+    },
+    "COCHINSHIP": {
+      "instrument_key": "NSE_EQ|INE704P01025",
+      "exclude": false,
+      "isin": "INE704P01025",
+      "market_cap": 396778419550.2588
+    },
+    "CONCORDBIO": {
+      "instrument_key": "NSE_EQ|INE338H01029",
+      "exclude": false,
+      "isin": "INE338H01029",
+      "market_cap": 151505181524.5869
+    },
+    "CRAFTSMAN": {
+      "instrument_key": "NSE_EQ|INE00LO01017",
+      "exclude": false,
+      "isin": "INE00LO01017",
+      "market_cap": 295518938467.0
+    },
+    "CREDITACC": {
+      "instrument_key": "NSE_EQ|INE741K01010",
+      "exclude": false,
+      "isin": "INE741K01010",
+      "market_cap": 228417920210.0725
+    },
+    "CSBBANK": {
+      "instrument_key": "NSE_EQ|INE679A01013",
+      "exclude": false,
+      "isin": "INE679A01013",
+      "market_cap": 54902266377.4682
+    },
+    "CUB": {
+      "instrument_key": "NSE_EQ|INE491A01021",
+      "exclude": false,
+      "isin": "INE491A01021",
+      "market_cap": 237660129701.3617
+    },
+    "CYIENT": {
+      "instrument_key": "NSE_EQ|INE136B01020",
+      "exclude": false,
+      "isin": "INE136B01020",
+      "market_cap": 113531294593.09204
+    },
+    "CYIENTDLM": {
+      "instrument_key": "NSE_EQ|INE055S01018",
+      "exclude": false,
+      "isin": "INE055S01018",
+      "market_cap": 68610520342.0
+    },
+    "DATAMATICS": {
+      "instrument_key": "NSE_EQ|INE365B01017",
+      "exclude": false,
+      "isin": "INE365B01017",
+      "market_cap": 44979962029.0
+    },
+    "DATAPATTNS": {
+      "instrument_key": "NSE_EQ|INE0IX101010",
+      "exclude": false,
+      "isin": "INE0IX101010",
+      "market_cap": 258254048997.0
+    },
+    "DCBBANK": {
+      "instrument_key": "NSE_EQ|INE503A01015",
+      "exclude": false,
+      "isin": "INE503A01015",
+      "market_cap": 70476984935.10553
+    },
+    "DCMSHRIRAM": {
+      "instrument_key": "NSE_EQ|INE499A01024",
+      "exclude": false,
+      "isin": "INE499A01024",
+      "market_cap": 156202052772.11755
+    },
+    "DEEPAKFERT": {
+      "instrument_key": "NSE_EQ|INE501A01019",
+      "exclude": false,
+      "isin": "INE501A01019",
+      "market_cap": 169696003399.19104
+    },
+    "DEEPAKNTR": {
+      "instrument_key": "NSE_EQ|INE288B01029",
+      "exclude": false,
+      "isin": "INE288B01029",
+      "market_cap": 223930101373.61646
+    },
+    "DELHIVERY": {
+      "instrument_key": "NSE_EQ|INE148O01028",
+      "exclude": false,
+      "isin": "INE148O01028",
+      "market_cap": 338010899982.5
+    },
+    "DEVYANI": {
+      "instrument_key": "NSE_EQ|INE872J01023",
+      "exclude": false,
+      "isin": "INE872J01023",
+      "market_cap": 170429262042.24292
+    },
+    "DIXON": {
+      "instrument_key": "NSE_EQ|INE935N01020",
+      "exclude": false,
+      "isin": "INE935N01020",
+      "market_cap": 864906927925.0
+    },
+    "ECLERX": {
+      "instrument_key": "NSE_EQ|INE738I01010",
+      "exclude": false,
+      "isin": "INE738I01010",
+      "market_cap": 172897085527.02148
+    },
+    "EDELWEISS": {
+      "instrument_key": "NSE_EQ|INE532F01054",
+      "exclude": false,
+      "isin": "INE532F01054",
+      "market_cap": 127412626388.04707
+    },
+    "ELECON": {
+      "instrument_key": "NSE_EQ|INE205B01031",
+      "exclude": false,
+      "isin": "INE205B01031",
+      "market_cap": 95347528887.37152
+    },
+    "ELECTCAST": {
+      "instrument_key": "NSE_EQ|INE086A01029",
+      "exclude": false,
+      "isin": "INE086A01029",
+      "market_cap": 50480955964.919586
+    },
+    "EMCURE": {
+      "instrument_key": "NSE_EQ|INE168P01015",
+      "exclude": false,
+      "isin": "INE168P01015",
+      "market_cap": 364658871770.75854
+    },
+    "ENDURANCE": {
+      "instrument_key": "NSE_EQ|INE913H01037",
+      "exclude": false,
+      "isin": "INE913H01037",
+      "market_cap": 387399563413.40625
+    },
+    "ENGINERSIN": {
+      "instrument_key": "NSE_EQ|INE510A01028",
+      "exclude": false,
+      "isin": "INE510A01028",
+      "market_cap": 154561652575.0
+    },
+    "EPL": {
+      "instrument_key": "NSE_EQ|INE255A01020",
+      "exclude": false,
+      "isin": "INE255A01020",
+      "market_cap": 80747041788.84177
+    },
+    "EQUITASBNK": {
+      "instrument_key": "NSE_EQ|INE063P01018",
+      "exclude": false,
+      "isin": "INE063P01018",
+      "market_cap": 83241334859.37585
+    },
+    "ERIS": {
+      "instrument_key": "NSE_EQ|INE406M01024",
+      "exclude": false,
+      "isin": "INE406M01024",
+      "market_cap": 183484295820.0
+    },
+    "FACT": {
+      "instrument_key": "NSE_EQ|INE188A01015",
+      "exclude": false,
+      "isin": "INE188A01015",
+      "market_cap": 513645725062.3722
+    },
+    "FIEMIND": {
+      "instrument_key": "NSE_EQ|INE737H01014",
+      "exclude": false,
+      "isin": "INE737H01014",
+      "market_cap": 54207974306.2793
+    },
+    "FILATEX": {
+      "instrument_key": "NSE_EQ|INE816B01035",
+      "exclude": false,
+      "isin": "INE816B01035",
+      "market_cap": 34196936407.36103
+    },
+    "FIVESTAR": {
+      "instrument_key": "NSE_EQ|INE128S01021",
+      "exclude": false,
+      "isin": "INE128S01021",
+      "market_cap": 155195415913.5
+    },
+    "FSL": {
+      "instrument_key": "NSE_EQ|INE684F01012",
+      "exclude": false,
+      "isin": "INE684F01012",
+      "market_cap": 178572424002.2928
+    },
+    "FUSION": {
+      "instrument_key": "NSE_EQ|INE139R01012",
+      "exclude": false,
+      "isin": "INE139R01012",
+      "market_cap": 32438679446.607086
+    },
+    "GABRIEL": {
+      "instrument_key": "NSE_EQ|INE524A01029",
+      "exclude": false,
+      "isin": "INE524A01029",
+      "market_cap": 241121446291.5
     },
     "GALLANTT": {
       "instrument_key": "NSE_EQ|INE297H01019",
       "exclude": false,
       "isin": "INE297H01019",
-      "market_cap": 133380103450.67596
+      "market_cap": 137988578336.14807
     },
-    "SEDEMAC": {
-      "instrument_key": "NSE_EQ|INE00XB01019",
+    "GANDHAR": {
+      "instrument_key": "NSE_EQ|INE717W01049",
       "exclude": false,
-      "isin": "INE00XB01019",
-      "market_cap": 132007960613.52539
+      "isin": "INE717W01049",
+      "market_cap": 25659118192.09076
     },
-    "LLOYDSENGG": {
-      "instrument_key": "NSE_EQ|INE093R01011",
+    "GENESYS": {
+      "instrument_key": "NSE_EQ|INE727B01026",
       "exclude": false,
-      "isin": "INE093R01011",
-      "market_cap": 130581235576.16718
+      "isin": "INE727B01026",
+      "market_cap": 15685766972.90451
     },
-    "VINATIORGA": {
-      "instrument_key": "NSE_EQ|INE410B01037",
+    "GESHIP": {
+      "instrument_key": "NSE_EQ|INE017A01032",
       "exclude": false,
-      "isin": "INE410B01037",
-      "market_cap": 136460452227.33069
+      "isin": "INE017A01032",
+      "market_cap": 196820168837.8667
+    },
+    "GLAND": {
+      "instrument_key": "NSE_EQ|INE068V01023",
+      "exclude": false,
+      "isin": "INE068V01023",
+      "market_cap": 491105749797.0
+    },
+    "GLOBUSSPR": {
+      "instrument_key": "NSE_EQ|INE615I01010",
+      "exclude": false,
+      "isin": "INE615I01010",
+      "market_cap": 27827513658.5
+    },
+    "GMBREW": {
+      "instrument_key": "NSE_EQ|INE075D01018",
+      "exclude": false,
+      "isin": "INE075D01018",
+      "market_cap": 21477249687.256897
+    },
+    "GNA": {
+      "instrument_key": "NSE_EQ|INE934S01014",
+      "exclude": false,
+      "isin": "INE934S01014",
+      "market_cap": 23425192068.115234
+    },
+    "GNFC": {
+      "instrument_key": "NSE_EQ|INE113A01013",
+      "exclude": false,
+      "isin": "INE113A01013",
+      "market_cap": 87708897270.11902
+    },
+    "GOKEX": {
+      "instrument_key": "NSE_EQ|INE887G01027",
+      "exclude": false,
+      "isin": "INE887G01027",
+      "market_cap": 56863439328.0
+    },
+    "GOKULAGRO": {
+      "instrument_key": "NSE_EQ|INE314T01033",
+      "exclude": false,
+      "isin": "INE314T01033",
+      "market_cap": 68324376241.46698
+    },
+    "GOODLUCK": {
+      "instrument_key": "NSE_EQ|INE127I01024",
+      "exclude": false,
+      "isin": "INE127I01024",
+      "market_cap": 47409748529.380554
+    },
+    "GPIL": {
+      "instrument_key": "NSE_EQ|INE177H01039",
+      "exclude": false,
+      "isin": "INE177H01039",
+      "market_cap": 156839527215.2179
+    },
+    "GPPL": {
+      "instrument_key": "NSE_EQ|INE517F01014",
+      "exclude": false,
+      "isin": "INE517F01014",
+      "market_cap": 77863756698.0
+    },
+    "GRANULES": {
+      "instrument_key": "NSE_EQ|INE101D01020",
+      "exclude": false,
+      "isin": "INE101D01020",
+      "market_cap": 214753207634.37952
+    },
+    "GRINDWELL": {
+      "instrument_key": "NSE_EQ|INE536A01023",
+      "exclude": false,
+      "isin": "INE536A01023",
+      "market_cap": 215173250703.125
+    },
+    "GRSE": {
+      "instrument_key": "NSE_EQ|INE382Z01011",
+      "exclude": false,
+      "isin": "INE382Z01011",
+      "market_cap": 286952760000.0
+    },
+    "GSFC": {
+      "instrument_key": "NSE_EQ|INE026A01025",
+      "exclude": false,
+      "isin": "INE026A01025",
+      "market_cap": 64553359860.0
+    },
+    "HAPPSTMNDS": {
+      "instrument_key": "NSE_EQ|INE419U01012",
+      "exclude": false,
+      "isin": "INE419U01012",
+      "market_cap": 51735182730.54785
+    },
+    "HAPPYFORGE": {
+      "instrument_key": "NSE_EQ|INE330T01021",
+      "exclude": false,
+      "isin": "INE330T01021",
+      "market_cap": 209964364921.46338
+    },
+    "HARIOMPIPE": {
+      "instrument_key": "NSE_EQ|INE00EV01017",
+      "exclude": false,
+      "isin": "INE00EV01017",
+      "market_cap": 11337124691.909332
+    },
+    "HERITGFOOD": {
+      "instrument_key": "NSE_EQ|INE978A01027",
+      "exclude": false,
+      "isin": "INE978A01027",
+      "market_cap": 35104725667.23633
+    },
+    "HFCL": {
+      "instrument_key": "NSE_EQ|INE548A01028",
+      "exclude": false,
+      "isin": "INE548A01028",
+      "market_cap": 371869364339.6406
+    },
+    "HGINFRA": {
+      "instrument_key": "NSE_EQ|INE926X01010",
+      "exclude": false,
+      "isin": "INE926X01010",
+      "market_cap": 31845862992.377106
+    },
+    "HIKAL": {
+      "instrument_key": "NSE_EQ|INE475B01022",
+      "exclude": false,
+      "isin": "INE475B01022",
+      "market_cap": 30002771723.270416
+    },
+    "HINDCOPPER": {
+      "instrument_key": "NSE_EQ|INE531E01026",
+      "exclude": false,
+      "isin": "INE531E01026",
+      "market_cap": 494245982524.2462
+    },
+    "HINDOILEXP": {
+      "instrument_key": "NSE_EQ|INE345A01011",
+      "exclude": false,
+      "isin": "INE345A01011",
+      "market_cap": 25517665933.30388
+    },
+    "HINDZINC": {
+      "instrument_key": "NSE_EQ|INE267A01025",
+      "exclude": false,
+      "isin": "INE267A01025",
+      "market_cap": 2494416968492.798
+    },
+    "HLEGLAS": {
+      "instrument_key": "NSE_EQ|INE461D01028",
+      "exclude": false,
+      "isin": "INE461D01028",
+      "market_cap": 23513901040.61383
+    },
+    "HOMEFIRST": {
+      "instrument_key": "NSE_EQ|INE481N01025",
+      "exclude": false,
+      "isin": "INE481N01025",
+      "market_cap": 128043513387.87878
+    },
+    "HSCL": {
+      "instrument_key": "NSE_EQ|INE019C01026",
+      "exclude": false,
+      "isin": "INE019C01026",
+      "market_cap": 339654118219.95544
+    },
+    "HUDCO": {
+      "instrument_key": "NSE_EQ|INE031A01017",
+      "exclude": false,
+      "isin": "INE031A01017",
+      "market_cap": 359421112559.5093
+    },
+    "IDEAFORGE": {
+      "instrument_key": "NSE_EQ|INE349Y01013",
+      "exclude": false,
+      "isin": "INE349Y01013",
+      "market_cap": 38273064801.493286
+    },
+    "IDFCFIRSTB": {
+      "instrument_key": "NSE_EQ|INE092T01019",
+      "exclude": false,
+      "isin": "INE092T01019",
+      "market_cap": 742760288562.1346
+    },
+    "IEX": {
+      "instrument_key": "NSE_EQ|INE022Q01020",
+      "exclude": false,
+      "isin": "INE022Q01020",
+      "market_cap": 104907736113.26828
+    },
+    "IIFL": {
+      "instrument_key": "NSE_EQ|INE530B01024",
+      "exclude": false,
+      "isin": "INE530B01024",
+      "market_cap": 276055452749.45374
+    },
+    "INDIAGLYCO": {
+      "instrument_key": "NSE_EQ|INE560A01023",
+      "exclude": false,
+      "isin": "INE560A01023",
+      "market_cap": 18325117141.901093
+    },
+    "INDRAMEDCO": {
+      "instrument_key": "NSE_EQ|INE681B01017",
+      "exclude": false,
+      "isin": "INE681B01017",
+      "market_cap": 32232227359.527588
+    },
+    "INDSWFTLAB": {
+      "instrument_key": "NSE_EQ|INE915B01019",
+      "exclude": false,
+      "isin": "INE915B01019",
+      "market_cap": 32055714855.69171
+    },
+    "INOXWIND": {
+      "instrument_key": "NSE_EQ|INE066P01011",
+      "exclude": false,
+      "isin": "INE066P01011",
+      "market_cap": 129980765010.37102
+    },
+    "INTELLECT": {
+      "instrument_key": "NSE_EQ|INE306R01017",
+      "exclude": false,
+      "isin": "INE306R01017",
+      "market_cap": 95449484395.21295
+    },
+    "IRB": {
+      "instrument_key": "NSE_EQ|INE821I01022",
+      "exclude": false,
+      "isin": "INE821I01022",
+      "market_cap": 232743065528.86963
+    },
+    "IRCON": {
+      "instrument_key": "NSE_EQ|INE962Y01021",
+      "exclude": false,
+      "isin": "INE962Y01021",
+      "market_cap": 110858592857.00363
+    },
+    "IRFC": {
+      "instrument_key": "NSE_EQ|INE053F01010",
+      "exclude": false,
+      "isin": "INE053F01010",
+      "market_cap": 1085862115681.7017
+    },
+    "ITI": {
+      "instrument_key": "NSE_EQ|INE248A01017",
+      "exclude": false,
+      "isin": "INE248A01017",
+      "market_cap": 260114453008.26797
+    },
+    "JAIBALAJI": {
+      "instrument_key": "NSE_EQ|INE091G01026",
+      "exclude": false,
+      "isin": "INE091G01026",
+      "market_cap": 64614770457.28226
+    },
+    "JAICORPLTD": {
+      "instrument_key": "NSE_EQ|INE070D01027",
+      "exclude": false,
+      "isin": "INE070D01027",
+      "market_cap": 17345158977.209244
+    },
+    "JAMNAAUTO": {
+      "instrument_key": "NSE_EQ|INE039C01032",
+      "exclude": false,
+      "isin": "INE039C01032",
+      "market_cap": 50340612010.11658
+    },
+    "JINDALSAW": {
+      "instrument_key": "NSE_EQ|INE324A01032",
+      "exclude": false,
+      "isin": "INE324A01032",
+      "market_cap": 197630665868.76062
+    },
+    "JISLJALEQS": {
+      "instrument_key": "NSE_EQ|INE175A01038",
+      "exclude": false,
+      "isin": "INE175A01038",
+      "market_cap": 22812169085.911957
+    },
+    "JKPAPER": {
+      "instrument_key": "NSE_EQ|INE789E01012",
+      "exclude": false,
+      "isin": "INE789E01012",
+      "market_cap": 76652510440.25
+    },
+    "JMFINANCIL": {
+      "instrument_key": "NSE_EQ|INE780C01023",
+      "exclude": false,
+      "isin": "INE780C01023",
+      "market_cap": 124242110243.12598
+    },
+    "JNKINDIA": {
+      "instrument_key": "NSE_EQ|INE0OAF01028",
+      "exclude": false,
+      "isin": "INE0OAF01028",
+      "market_cap": 24538588740.21881
+    },
+    "JUBLFOOD": {
+      "instrument_key": "NSE_EQ|INE797F01020",
+      "exclude": false,
+      "isin": "INE797F01020",
+      "market_cap": 313085964831.5961
+    },
+    "JUBLPHARMA": {
+      "instrument_key": "NSE_EQ|INE700A01033",
+      "exclude": false,
+      "isin": "INE700A01033",
+      "market_cap": 147838586478.07422
+    },
+    "JWL": {
+      "instrument_key": "NSE_EQ|INE209L01016",
+      "exclude": false,
+      "isin": "INE209L01016",
+      "market_cap": 104150162495.06908
+    },
+    "JYOTICNC": {
+      "instrument_key": "NSE_EQ|INE980O01024",
+      "exclude": false,
+      "isin": "INE980O01024",
+      "market_cap": 229219744010.72168
+    },
+    "KARURVYSYA": {
+      "instrument_key": "NSE_EQ|INE036D01028",
+      "exclude": false,
+      "isin": "INE036D01028",
+      "market_cap": 333210212185.7373
+    },
+    "KAYNES": {
+      "instrument_key": "NSE_EQ|INE918Z01012",
+      "exclude": false,
+      "isin": "INE918Z01012",
+      "market_cap": 241355625121.7036
+    },
+    "KFINTECH": {
+      "instrument_key": "NSE_EQ|INE138Y01010",
+      "exclude": false,
+      "isin": "INE138Y01010",
+      "market_cap": 159828878529.19513
+    },
+    "KIMS": {
+      "instrument_key": "NSE_EQ|INE967H01025",
+      "exclude": false,
+      "isin": "INE967H01025",
+      "market_cap": 303585414869.0085
+    },
+    "KIOCL": {
+      "instrument_key": "NSE_EQ|INE880L01014",
+      "exclude": false,
+      "isin": "INE880L01014",
+      "market_cap": 229517198072.63168
+    },
+    "KIRLOSBROS": {
+      "instrument_key": "NSE_EQ|INE732A01036",
+      "exclude": false,
+      "isin": "INE732A01036",
+      "market_cap": 145786849182.09448
+    },
+    "KIRLOSENG": {
+      "instrument_key": "NSE_EQ|INE146L01010",
+      "exclude": false,
+      "isin": "INE146L01010",
+      "market_cap": 314730347336.6616
+    },
+    "KITEX": {
+      "instrument_key": "NSE_EQ|INE602G01020",
+      "exclude": false,
+      "isin": "INE602G01020",
+      "market_cap": 25344480182.647705
+    },
+    "KNRCON": {
+      "instrument_key": "NSE_EQ|INE634I01029",
+      "exclude": false,
+      "isin": "INE634I01029",
+      "market_cap": 34583419105.303955
+    },
+    "KPIGREEN": {
+      "instrument_key": "NSE_EQ|INE542W01025",
+      "exclude": false,
+      "isin": "INE542W01025",
+      "market_cap": 59855069497.41211
+    },
+    "KPRMILL": {
+      "instrument_key": "NSE_EQ|INE930H01031",
+      "exclude": false,
+      "isin": "INE930H01031",
+      "market_cap": 393250130144.5331
+    },
+    "KRBL": {
+      "instrument_key": "NSE_EQ|INE001B01026",
+      "exclude": false,
+      "isin": "INE001B01026",
+      "market_cap": 98285318227.76697
+    },
+    "KSB": {
+      "instrument_key": "NSE_EQ|INE999A01023",
+      "exclude": false,
+      "isin": "INE999A01023",
+      "market_cap": 140153781741.4978
+    },
+    "LATENTVIEW": {
+      "instrument_key": "NSE_EQ|INE0I7C01011",
+      "exclude": false,
+      "isin": "INE0I7C01011",
+      "market_cap": 53841882321.9397
+    },
+    "LAURUSLABS": {
+      "instrument_key": "NSE_EQ|INE947Q01028",
+      "exclude": false,
+      "isin": "INE947Q01028",
+      "market_cap": 1005413001636.8325
+    },
+    "LLOYDSME": {
+      "instrument_key": "NSE_EQ|INE281B01032",
+      "exclude": false,
+      "isin": "INE281B01032",
+      "market_cap": 1014968015324.2006
+    },
+    "LTFOODS": {
+      "instrument_key": "NSE_EQ|INE818H01020",
+      "exclude": false,
+      "isin": "INE818H01020",
+      "market_cap": 156437451272.0
+    },
+    "LUMAXIND": {
+      "instrument_key": "NSE_EQ|INE162B01018",
+      "exclude": false,
+      "isin": "INE162B01018",
+      "market_cap": 58063437318.0
     },
     "LUMAXTECH": {
       "instrument_key": "NSE_EQ|INE872H01027",
       "exclude": false,
       "isin": "INE872H01027",
-      "market_cap": 140404872300.0
+      "market_cap": 130685585231.00647
     },
-    "ANURAS": {
-      "instrument_key": "NSE_EQ|INE930P01018",
+    "LUXIND": {
+      "instrument_key": "NSE_EQ|INE150G01020",
       "exclude": false,
-      "isin": "INE930P01018",
-      "market_cap": 143428035250.87427
+      "isin": "INE150G01020",
+      "market_cap": 35183866770.0
+    },
+    "LXCHEM": {
+      "instrument_key": "NSE_EQ|INE576O01020",
+      "exclude": false,
+      "isin": "INE576O01020",
+      "market_cap": 47548423807.616
+    },
+    "MAHLOG": {
+      "instrument_key": "NSE_EQ|INE766P01016",
+      "exclude": false,
+      "isin": "INE766P01016",
+      "market_cap": 40306625212.0
+    },
+    "MANAPPURAM": {
+      "instrument_key": "NSE_EQ|INE522D01027",
+      "exclude": false,
+      "isin": "INE522D01027",
+      "market_cap": 303875228997.0
+    },
+    "MANINFRA": {
+      "instrument_key": "NSE_EQ|INE949H01023",
+      "exclude": false,
+      "isin": "INE949H01023",
+      "market_cap": 50664183904.87469
+    },
+    "MAPMYINDIA": {
+      "instrument_key": "NSE_EQ|INE0BV301023",
+      "exclude": false,
+      "isin": "INE0BV301023",
+      "market_cap": 53019655087.66992
+    },
+    "MARINE": {
+      "instrument_key": "NSE_EQ|INE01JE01028",
+      "exclude": false,
+      "isin": "INE01JE01028",
+      "market_cap": 56342933294.44885
+    },
+    "MARKSANS": {
+      "instrument_key": "NSE_EQ|INE750C01026",
+      "exclude": false,
+      "isin": "INE750C01026",
+      "market_cap": 151016818354.5
+    },
+    "MAXHEALTH": {
+      "instrument_key": "NSE_EQ|INE027H01010",
+      "exclude": false,
+      "isin": "INE027H01010",
+      "market_cap": 965815750186.0713
+    },
+    "MAZDOCK": {
+      "instrument_key": "NSE_EQ|INE249Z01020",
+      "exclude": false,
+      "isin": "INE249Z01020",
+      "market_cap": 989329827392.5781
+    },
+    "MCX": {
+      "instrument_key": "NSE_EQ|INE745G01043",
+      "exclude": false,
+      "isin": "INE745G01043",
+      "market_cap": 854276543085.0
+    },
+    "MEDANTA": {
+      "instrument_key": "NSE_EQ|INE474Q01031",
+      "exclude": false,
+      "isin": "INE474Q01031",
+      "market_cap": 382709347413.3633
+    },
+    "MEDPLUS": {
+      "instrument_key": "NSE_EQ|INE804L01022",
+      "exclude": false,
+      "isin": "INE804L01022",
+      "market_cap": 79257824580.0
+    },
+    "METROPOLIS": {
+      "instrument_key": "NSE_EQ|INE112L01020",
+      "exclude": false,
+      "isin": "INE112L01020",
+      "market_cap": 119216738401.62695
+    },
+    "MOIL": {
+      "instrument_key": "NSE_EQ|INE490G01020",
+      "exclude": false,
+      "isin": "INE490G01020",
+      "market_cap": 50525378512.28758
+    },
+    "MOTHERSON": {
+      "instrument_key": "NSE_EQ|INE775A01035",
+      "exclude": false,
+      "isin": "INE775A01035",
+      "market_cap": 1719434168079.644
+    },
+    "MOTILALOFS": {
+      "instrument_key": "NSE_EQ|INE338I01027",
+      "exclude": false,
+      "isin": "INE338I01027",
+      "market_cap": 633041717883.0
+    },
+    "MTARTECH": {
+      "instrument_key": "NSE_EQ|INE864I01014",
+      "exclude": false,
+      "isin": "INE864I01014",
+      "market_cap": 231281364729.0
+    },
+    "MUNJALAU": {
+      "instrument_key": "NSE_EQ|INE672B01032",
+      "exclude": false,
+      "isin": "INE672B01032",
+      "market_cap": 11580000305.175781
+    },
+    "MUTHOOTFIN": {
+      "instrument_key": "NSE_EQ|INE414G01012",
+      "exclude": false,
+      "isin": "INE414G01012",
+      "market_cap": 1162732980588.247
+    },
+    "NATCOPHARM": {
+      "instrument_key": "NSE_EQ|INE987B01026",
+      "exclude": false,
+      "isin": "INE987B01026",
+      "market_cap": 151858711452.63672
+    },
+    "NATIONALUM": {
+      "instrument_key": "NSE_EQ|INE139A01034",
+      "exclude": false,
+      "isin": "INE139A01034",
+      "market_cap": 676339655562.75
+    },
+    "NAVA": {
+      "instrument_key": "NSE_EQ|INE725A01030",
+      "exclude": false,
+      "isin": "INE725A01030",
+      "market_cap": 157521803932.0
+    },
+    "NAZARA": {
+      "instrument_key": "NSE_EQ|INE418L01047",
+      "exclude": false,
+      "isin": "INE418L01047",
+      "market_cap": 140221700748.0
+    },
+    "NBCC": {
+      "instrument_key": "NSE_EQ|INE095N01031",
+      "exclude": false,
+      "isin": "INE095N01031",
+      "market_cap": 231633002471.92383
+    },
+    "NCC": {
+      "instrument_key": "NSE_EQ|INE868B01028",
+      "exclude": false,
+      "isin": "INE868B01028",
+      "market_cap": 93454968455.87146
+    },
+    "NEOGEN": {
+      "instrument_key": "NSE_EQ|INE136S01016",
+      "exclude": false,
+      "isin": "INE136S01016",
+      "market_cap": 60853029623.6084
+    },
+    "NETWEB": {
+      "instrument_key": "NSE_EQ|INE0NT901020",
+      "exclude": false,
+      "isin": "INE0NT901020",
+      "market_cap": 307335334020.0
+    },
+    "NETWORK18": {
+      "instrument_key": "NSE_EQ|INE870H01013",
+      "exclude": false,
+      "isin": "INE870H01013",
+      "market_cap": 42658751238.74565
+    },
+    "NEULANDLAB": {
+      "instrument_key": "NSE_EQ|INE794A01010",
+      "exclude": false,
+      "isin": "INE794A01010",
+      "market_cap": 289955491400.0
+    },
+    "NEWGEN": {
+      "instrument_key": "NSE_EQ|INE619B01017",
+      "exclude": false,
+      "isin": "INE619B01017",
+      "market_cap": 73042989655.18854
+    },
+    "NFL": {
+      "instrument_key": "NSE_EQ|INE870D01012",
+      "exclude": false,
+      "isin": "INE870D01012",
+      "market_cap": 34414075508.56323
+    },
+    "NITINSPIN": {
+      "instrument_key": "NSE_EQ|INE229H01012",
+      "exclude": false,
+      "isin": "INE229H01012",
+      "market_cap": 35233074686.2793
+    },
+    "NMDC": {
+      "instrument_key": "NSE_EQ|INE584A01023",
+      "exclude": false,
+      "isin": "INE584A01023",
+      "market_cap": 740183140998.8983
+    },
+    "NOCIL": {
+      "instrument_key": "NSE_EQ|INE163A01018",
+      "exclude": false,
+      "isin": "INE163A01018",
+      "market_cap": 28728287960.0
+    },
+    "NRBBEARING": {
+      "instrument_key": "NSE_EQ|INE349A01021",
+      "exclude": false,
+      "isin": "INE349A01021",
+      "market_cap": 46435618251.5686
+    },
+    "NUVAMA": {
+      "instrument_key": "NSE_EQ|INE531F01023",
+      "exclude": false,
+      "isin": "INE531F01023",
+      "market_cap": 335479846935.2842
+    },
+    "ORIENTHOT": {
+      "instrument_key": "NSE_EQ|INE750A01020",
+      "exclude": false,
+      "isin": "INE750A01020",
+      "market_cap": 24853862542.84973
+    },
+    "OSWALPUMPS": {
+      "instrument_key": "NSE_EQ|INE0BYP01024",
+      "exclude": false,
+      "isin": "INE0BYP01024",
+      "market_cap": 31351346675.0
+    },
+    "PAISALO": {
+      "instrument_key": "NSE_EQ|INE420C01059",
+      "exclude": false,
+      "isin": "INE420C01059",
+      "market_cap": 72583441046.48085
+    },
+    "PARAGMILK": {
+      "instrument_key": "NSE_EQ|INE883N01014",
+      "exclude": false,
+      "isin": "INE883N01014",
+      "market_cap": 31222307811.273422
+    },
+    "PARAS": {
+      "instrument_key": "NSE_EQ|INE045601023",
+      "exclude": false,
+      "isin": "INE045601023",
+      "market_cap": 117633321666.07178
+    },
+    "PATELENG": {
+      "instrument_key": "NSE_EQ|INE244B01030",
+      "exclude": false,
+      "isin": "INE244B01030",
+      "market_cap": 25958196695.917427
+    },
+    "PCBL": {
+      "instrument_key": "NSE_EQ|INE602A01031",
+      "exclude": false,
+      "isin": "INE602A01031",
+      "market_cap": 125967050269.09485
+    },
+    "PENIND": {
+      "instrument_key": "NSE_EQ|INE932A01024",
+      "exclude": false,
+      "isin": "INE932A01024",
+      "market_cap": 23889340156.808655
+    },
+    "PGEL": {
+      "instrument_key": "NSE_EQ|INE457L01029",
+      "exclude": false,
+      "isin": "INE457L01029",
+      "market_cap": 160538423333.25146
+    },
+    "PNBHOUSING": {
+      "instrument_key": "NSE_EQ|INE572E01012",
+      "exclude": false,
+      "isin": "INE572E01012",
+      "market_cap": 308139823209.5
+    },
+    "PNCINFRA": {
+      "instrument_key": "NSE_EQ|INE195J01029",
+      "exclude": false,
+      "isin": "INE195J01029",
+      "market_cap": 46546466723.91632
+    },
+    "POKARNA": {
+      "instrument_key": "NSE_EQ|INE637C01025",
+      "exclude": false,
+      "isin": "INE637C01025",
+      "market_cap": 24958220000.0
+    },
+    "POLYCAB": {
+      "instrument_key": "NSE_EQ|INE455K01017",
+      "exclude": false,
+      "isin": "INE455K01017",
+      "market_cap": 1235056799547.0
+    },
+    "POONAWALLA": {
+      "instrument_key": "NSE_EQ|INE511C01022",
+      "exclude": false,
+      "isin": "INE511C01022",
+      "market_cap": 402592220754.9326
+    },
+    "PRAJIND": {
+      "instrument_key": "NSE_EQ|INE074A01025",
+      "exclude": false,
+      "isin": "INE074A01025",
+      "market_cap": 61853104112.0
+    },
+    "PRESTIGE": {
+      "instrument_key": "NSE_EQ|INE811K01011",
+      "exclude": false,
+      "isin": "INE811K01011",
+      "market_cap": 671680734296.6748
+    },
+    "PRICOLLTD": {
+      "instrument_key": "NSE_EQ|INE726V01018",
+      "exclude": false,
+      "isin": "INE726V01018",
+      "market_cap": 95165072150.58875
+    },
+    "PRIVISCL": {
+      "instrument_key": "NSE_EQ|INE959A01019",
+      "exclude": false,
+      "isin": "INE959A01019",
+      "market_cap": 133238980080.68262
+    },
+    "PRUDENT": {
+      "instrument_key": "NSE_EQ|INE00F201020",
+      "exclude": false,
+      "isin": "INE00F201020",
+      "market_cap": 138443234580.0
+    },
+    "PSPPROJECT": {
+      "instrument_key": "NSE_EQ|INE488V01015",
+      "exclude": false,
+      "isin": "INE488V01015",
+      "market_cap": 34563678540.71716
+    },
+    "PURVA": {
+      "instrument_key": "NSE_EQ|INE323I01011",
+      "exclude": false,
+      "isin": "INE323I01011",
+      "market_cap": 52734974517.86255
+    },
+    "PVRINOX": {
+      "instrument_key": "NSE_EQ|INE191H01014",
+      "exclude": false,
+      "isin": "INE191H01014",
+      "market_cap": 114569890870.47998
+    },
+    "QUESS": {
+      "instrument_key": "NSE_EQ|INE615P01015",
+      "exclude": false,
+      "isin": "INE615P01015",
+      "market_cap": 50977944517.5
+    },
+    "RAILTEL": {
+      "instrument_key": "NSE_EQ|INE0DD101019",
+      "exclude": false,
+      "isin": "INE0DD101019",
+      "market_cap": 86444761884.30258
+    },
+    "RATEGAIN": {
+      "instrument_key": "NSE_EQ|INE0CLI01024",
+      "exclude": false,
+      "isin": "INE0CLI01024",
+      "market_cap": 100340067597.0
+    },
+    "RATNAMANI": {
+      "instrument_key": "NSE_EQ|INE703B01027",
+      "exclude": false,
+      "isin": "INE703B01027",
+      "market_cap": 186970410000.0
+    },
+    "RAYMOND": {
+      "instrument_key": "NSE_EQ|INE301A01014",
+      "exclude": false,
+      "isin": "INE301A01014",
+      "market_cap": 51277877585.5
+    },
+    "RAYMONDLSL": {
+      "instrument_key": "NSE_EQ|INE02ID01020",
+      "exclude": false,
+      "isin": "INE02ID01020",
+      "market_cap": 40928690208.0
+    },
+    "RBA": {
+      "instrument_key": "NSE_EQ|INE07T201019",
+      "exclude": false,
+      "isin": "INE07T201019",
+      "market_cap": 68836610857.24564
+    },
+    "RBLBANK": {
+      "instrument_key": "NSE_EQ|INE976G01028",
+      "exclude": false,
+      "isin": "INE976G01028",
+      "market_cap": 645155012223.218
+    },
+    "RCF": {
+      "instrument_key": "NSE_EQ|INE027A01015",
+      "exclude": false,
+      "isin": "INE027A01015",
+      "market_cap": 62782107463.61847
+    },
+    "REDINGTON": {
+      "instrument_key": "NSE_EQ|INE891D01026",
+      "exclude": false,
+      "isin": "INE891D01026",
+      "market_cap": 296292509349.0
+    },
+    "RELAXO": {
+      "instrument_key": "NSE_EQ|INE131B01039",
+      "exclude": false,
+      "isin": "INE131B01039",
+      "market_cap": 84004328884.5011
+    },
+    "RITES": {
+      "instrument_key": "NSE_EQ|INE320J01015",
+      "exclude": false,
+      "isin": "INE320J01015",
+      "market_cap": 103329811410.0
+    },
+    "RVNL": {
+      "instrument_key": "NSE_EQ|INE415G01027",
+      "exclude": false,
+      "isin": "INE415G01027",
+      "market_cap": 441002589897.6425
+    },
+    "SAKSOFT": {
+      "instrument_key": "NSE_EQ|INE667G01023",
+      "exclude": false,
+      "isin": "INE667G01023",
+      "market_cap": 19407908143.0
+    },
+    "SALZERELEC": {
+      "instrument_key": "NSE_EQ|INE457F01013",
+      "exclude": false,
+      "isin": "INE457F01013",
+      "market_cap": 9759986903.003723
+    },
+    "SANDHAR": {
+      "instrument_key": "NSE_EQ|INE278H01035",
+      "exclude": false,
+      "isin": "INE278H01035",
+      "market_cap": 37769917206.0
+    },
+    "SANGHVIMOV": {
+      "instrument_key": "NSE_EQ|INE989A01032",
+      "exclude": false,
+      "isin": "INE989A01032",
+      "market_cap": 37812068000.0
+    },
+    "SANSERA": {
+      "instrument_key": "NSE_EQ|INE953O01021",
+      "exclude": false,
+      "isin": "INE953O01021",
+      "market_cap": 244166437466.55078
+    },
+    "SAPPHIRE": {
+      "instrument_key": "NSE_EQ|INE806T01020",
+      "exclude": false,
+      "isin": "INE806T01020",
+      "market_cap": 73045499810.45844
+    },
+    "SARDAEN": {
+      "instrument_key": "NSE_EQ|INE385C01021",
+      "exclude": false,
+      "isin": "INE385C01021",
+      "market_cap": 179890638335.0
+    },
+    "SAREGAMA": {
+      "instrument_key": "NSE_EQ|INE979A01025",
+      "exclude": false,
+      "isin": "INE979A01025",
+      "market_cap": 95135124415.62775
+    },
+    "SATIN": {
+      "instrument_key": "NSE_EQ|INE836B01017",
+      "exclude": false,
+      "isin": "INE836B01017",
+      "market_cap": 24766599135.71515
+    },
+    "SBFC": {
+      "instrument_key": "NSE_EQ|INE423Y01016",
+      "exclude": false,
+      "isin": "INE423Y01016",
+      "market_cap": 109190999640.30664
+    },
+    "SERVOTECH": {
+      "instrument_key": "NSE_EQ|INE782X01033",
+      "exclude": false,
+      "isin": "INE782X01033",
+      "market_cap": 17882434723.56253
+    },
+    "SHARDACROP": {
+      "instrument_key": "NSE_EQ|INE221J01015",
+      "exclude": false,
+      "isin": "INE221J01015",
+      "market_cap": 69424670902.5
+    },
+    "SHILPAMED": {
+      "instrument_key": "NSE_EQ|INE790G01031",
+      "exclude": false,
+      "isin": "INE790G01031",
+      "market_cap": 181783521268.67334
+    },
+    "SHRIPISTON": {
+      "instrument_key": "NSE_EQ|INE526E01018",
+      "exclude": false,
+      "isin": "INE526E01018",
+      "market_cap": 209652042618.21875
+    },
+    "SHYAMMETL": {
+      "instrument_key": "NSE_EQ|INE810G01011",
+      "exclude": false,
+      "isin": "INE810G01011",
+      "market_cap": 299757698658.0
+    },
+    "SIGNATURE": {
+      "instrument_key": "NSE_EQ|INE903U01023",
+      "exclude": false,
+      "isin": "INE903U01023",
+      "market_cap": 112928674787.55872
+    },
+    "SJS": {
+      "instrument_key": "NSE_EQ|INE284S01014",
+      "exclude": false,
+      "isin": "INE284S01014",
+      "market_cap": 75757371723.26807
+    },
+    "SJVN": {
+      "instrument_key": "NSE_EQ|INE002L01015",
+      "exclude": false,
+      "isin": "INE002L01015",
+      "market_cap": 256340552457.31143
+    },
+    "SKIPPER": {
+      "instrument_key": "NSE_EQ|INE439E01022",
+      "exclude": false,
+      "isin": "INE439E01022",
+      "market_cap": 67369839062.72308
+    },
+    "SOBHA": {
+      "instrument_key": "NSE_EQ|INE671H01015",
+      "exclude": false,
+      "isin": "INE671H01015",
+      "market_cap": 133702985272.22241
+    },
+    "SOLARINDS": {
+      "instrument_key": "NSE_EQ|INE343H01029",
+      "exclude": false,
+      "isin": "INE343H01029",
+      "market_cap": 1974493000100.0
+    },
+    "SONACOMS": {
+      "instrument_key": "NSE_EQ|INE073K01018",
+      "exclude": false,
+      "isin": "INE073K01018",
+      "market_cap": 491033037582.0
+    },
+    "SONATSOFTW": {
+      "instrument_key": "NSE_EQ|INE269A01021",
+      "exclude": false,
+      "isin": "INE269A01021",
+      "market_cap": 76007762876.81937
+    },
+    "SPLPETRO": {
+      "instrument_key": "NSE_EQ|INE663A01033",
+      "exclude": false,
+      "isin": "INE663A01033",
+      "market_cap": 150743346405.15308
+    },
+    "SUBROS": {
+      "instrument_key": "NSE_EQ|INE287B01021",
+      "exclude": false,
+      "isin": "INE287B01021",
+      "market_cap": 46323904482.33032
+    },
+    "SUDARSCHEM": {
+      "instrument_key": "NSE_EQ|INE659A01023",
+      "exclude": false,
+      "isin": "INE659A01023",
+      "market_cap": 98793001816.0
+    },
+    "SUNTECK": {
+      "instrument_key": "NSE_EQ|INE805D01034",
+      "exclude": false,
+      "isin": "INE805D01034",
+      "market_cap": 43208265856.25
+    },
+    "SUNTV": {
+      "instrument_key": "NSE_EQ|INE424H01027",
+      "exclude": false,
+      "isin": "INE424H01027",
+      "market_cap": 179209980945.0
+    },
+    "SUPRIYA": {
+      "instrument_key": "NSE_EQ|INE07RO01027",
+      "exclude": false,
+      "isin": "INE07RO01027",
+      "market_cap": 73287635715.08789
+    },
+    "SURYODAY": {
+      "instrument_key": "NSE_EQ|INE428Q01011",
+      "exclude": false,
+      "isin": "INE428Q01011",
+      "market_cap": 16173034496.566742
+    },
+    "SUVEN": {
+      "instrument_key": "NSE_EQ|INE495B01038",
+      "exclude": false,
+      "isin": "INE495B01038",
+      "market_cap": 106893460664.54846
+    },
+    "SUZLON": {
+      "instrument_key": "NSE_EQ|INE040H01021",
+      "exclude": false,
+      "isin": "INE040H01021",
+      "market_cap": 622821410132.4092
+    },
+    "SYNGENE": {
+      "instrument_key": "NSE_EQ|INE398R01022",
+      "exclude": false,
+      "isin": "INE398R01022",
+      "market_cap": 157096977654.03137
+    },
+    "SYRMA": {
+      "instrument_key": "NSE_EQ|INE0DYJ01015",
+      "exclude": false,
+      "isin": "INE0DYJ01015",
+      "market_cap": 309548338039.0
+    },
+    "TANLA": {
+      "instrument_key": "NSE_EQ|INE483C01032",
+      "exclude": false,
+      "isin": "INE483C01032",
+      "market_cap": 67781635017.252686
+    },
+    "TARC": {
+      "instrument_key": "NSE_EQ|INE0EK901012",
+      "exclude": false,
+      "isin": "INE0EK901012",
+      "market_cap": 39466185463.91258
+    },
+    "TARIL": {
+      "instrument_key": "NSE_EQ|INE763I01026",
+      "exclude": false,
+      "isin": "INE763I01026",
+      "market_cap": 89569483033.53314
+    },
+    "TARSONS": {
+      "instrument_key": "NSE_EQ|INE144Z01023",
+      "exclude": false,
+      "isin": "INE144Z01023",
+      "market_cap": 17555413065.440735
+    },
+    "TATVA": {
+      "instrument_key": "NSE_EQ|INE0GK401011",
+      "exclude": false,
+      "isin": "INE0GK401011",
+      "market_cap": 38765312403.809814
+    },
+    "TDPOWERSYS": {
+      "instrument_key": "NSE_EQ|INE419M01035",
+      "exclude": false,
+      "isin": "INE419M01035",
+      "market_cap": 229765144372.6587
+    },
+    "TECHNOE": {
+      "instrument_key": "NSE_EQ|INE285K01026",
+      "exclude": false,
+      "isin": "INE285K01026",
+      "market_cap": 112205827575.52747
+    },
+    "THANGAMAYL": {
+      "instrument_key": "NSE_EQ|INE085J01014",
+      "exclude": false,
+      "isin": "INE085J01014",
+      "market_cap": 169676752639.0
+    },
+    "THYROCARE": {
+      "instrument_key": "NSE_EQ|INE594H01019",
+      "exclude": false,
+      "isin": "INE594H01019",
+      "market_cap": 90387928204.68347
+    },
+    "TIINDIA": {
+      "instrument_key": "NSE_EQ|INE974X01010",
+      "exclude": false,
+      "isin": "INE974X01010",
+      "market_cap": 519586811892.22656
+    },
+    "TIPSMUSIC": {
+      "instrument_key": "NSE_EQ|INE716B01029",
+      "exclude": false,
+      "isin": "INE716B01029",
+      "market_cap": 82764564505.94421
+    },
+    "TITAGARH": {
+      "instrument_key": "NSE_EQ|INE615H01020",
+      "exclude": false,
+      "isin": "INE615H01020",
+      "market_cap": 119226685166.4331
+    },
+    "TRIDENT": {
+      "instrument_key": "NSE_EQ|INE064C01022",
+      "exclude": false,
+      "isin": "INE064C01022",
+      "market_cap": 122294017680.0
+    },
+    "TRITURBINE": {
+      "instrument_key": "NSE_EQ|INE152M01016",
+      "exclude": false,
+      "isin": "INE152M01016",
+      "market_cap": 180486850097.25
+    },
+    "TRIVENI": {
+      "instrument_key": "NSE_EQ|INE256C01024",
+      "exclude": false,
+      "isin": "INE256C01024",
+      "market_cap": 61150736940.0
+    },
+    "UFLEX": {
+      "instrument_key": "NSE_EQ|INE516A01017",
+      "exclude": false,
+      "isin": "INE516A01017",
+      "market_cap": 48955777815.18787
+    },
+    "UJJIVANSFB": {
+      "instrument_key": "NSE_EQ|INE551W01018",
+      "exclude": false,
+      "isin": "INE551W01018",
+      "market_cap": 127298158940.65434
+    },
+    "UNIMECH": {
+      "instrument_key": "NSE_EQ|INE0U3I01011",
+      "exclude": false,
+      "isin": "INE0U3I01011",
+      "market_cap": 76047583518.0
+    },
+    "UNIPARTS": {
+      "instrument_key": "NSE_EQ|INE244O01017",
+      "exclude": false,
+      "isin": "INE244O01017",
+      "market_cap": 40531633160.59607
+    },
+    "VADILALIND": {
+      "instrument_key": "NSE_EQ|INE694D01016",
+      "exclude": false,
+      "isin": "INE694D01016",
+      "market_cap": 54347182630.0
+    },
+    "VASCONEQ": {
+      "instrument_key": "NSE_EQ|INE893I01013",
+      "exclude": false,
+      "isin": "INE893I01013",
+      "market_cap": 6985667808.264566
+    },
+    "VIJAYA": {
+      "instrument_key": "NSE_EQ|INE043W01024",
+      "exclude": false,
+      "isin": "INE043W01024",
+      "market_cap": 155114558790.0
+    },
+    "VIMTALABS": {
+      "instrument_key": "NSE_EQ|INE579C01029",
+      "exclude": false,
+      "isin": "INE579C01029",
+      "market_cap": 28557165455.705566
+    },
+    "WAAREEENER": {
+      "instrument_key": "NSE_EQ|INE377N01017",
+      "exclude": false,
+      "isin": "INE377N01017",
+      "market_cap": 748583806113.0493
+    },
+    "WABAG": {
+      "instrument_key": "NSE_EQ|INE956G01038",
+      "exclude": false,
+      "isin": "INE956G01038",
+      "market_cap": 125545560112.0
+    },
+    "WEBELSOLAR": {
+      "instrument_key": "NSE_EQ|INE855C01023",
+      "exclude": false,
+      "isin": "INE855C01023",
+      "market_cap": 32388594199.51912
+    },
+    "WELCORP": {
+      "instrument_key": "NSE_EQ|INE191B01025",
+      "exclude": false,
+      "isin": "INE191B01025",
+      "market_cap": 695835541937.4316
+    },
+    "WELENT": {
+      "instrument_key": "NSE_EQ|INE625G01013",
+      "exclude": false,
+      "isin": "INE625G01013",
+      "market_cap": 106049999420.0
+    },
+    "WELSPUNLIV": {
+      "instrument_key": "NSE_EQ|INE192B01031",
+      "exclude": false,
+      "isin": "INE192B01031",
+      "market_cap": 201747173872.44955
+    },
+    "WESTLIFE": {
+      "instrument_key": "NSE_EQ|INE274F01020",
+      "exclude": false,
+      "isin": "INE274F01020",
+      "market_cap": 81216647466.5
+    },
+    "WOCKPHARMA": {
+      "instrument_key": "NSE_EQ|INE049B01025",
+      "exclude": false,
+      "isin": "INE049B01025",
+      "market_cap": 356296571032.11206
+    },
+    "YATHARTH": {
+      "instrument_key": "NSE_EQ|INE0JO301016",
+      "exclude": false,
+      "isin": "INE0JO301016",
+      "market_cap": 96152015202.7013
+    },
+    "ZEEL": {
+      "instrument_key": "NSE_EQ|INE256A01028",
+      "exclude": false,
+      "isin": "INE256A01028",
+      "market_cap": 82460590741.36368
+    },
+    "ZENSARTECH": {
+      "instrument_key": "NSE_EQ|INE520A01027",
+      "exclude": false,
+      "isin": "INE520A01027",
+      "market_cap": 102173154928.0
+    },
+    "ZENTEC": {
+      "instrument_key": "NSE_EQ|INE251B01027",
+      "exclude": false,
+      "isin": "INE251B01027",
+      "market_cap": 160285878369.74707
     }
   }
 }

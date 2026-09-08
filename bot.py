@@ -18,16 +18,19 @@ one shot rather than polled every few seconds.
 One trading day looks like:
   1. Login, refresh instrument tokens, fetch every universe name's prior
      close (idle time before the open — this is the slow part, so it's
-     done before 09:15, not during the entry sprint).
-  2. At 09:15: pull one bulk LTP snapshot, rank the universe by
-     cross-sectionally demeaned overnight return, size the basket (capital
-     split into n_splits equal slots, leveraged flat at
-     STRATEGY.intraday_leverage on both legs, rounded down to whole
-     shares, backfilling from the next-ranked candidate if one can't be
-     sized), and fire one LIMIT entry order per name — longs on the
-     biggest losers, shorts on the biggest winners.
-  3. At 09:20: cancel anything still open (a real backstop now — LIMIT
-     orders aren't guaranteed to fill the way MARKET orders were).
+     done before 09:15, not during the entry sprint), then open the
+     Upstox market-data WebSocket for today's universe so ticks are
+     already streaming in by the time the open happens.
+  2. At 09:15: rank the universe by cross-sectionally demeaned overnight
+     return off the streamed open prices, size the basket (capital split
+     into n_splits equal slots, leveraged flat at STRATEGY.intraday_leverage
+     on both legs, rounded down to whole shares, backfilling from the
+     next-ranked candidate if one can't be sized), and fire the whole
+     basket as a ladder of parallel IOC LIMIT waves (longs on the biggest
+     losers, shorts on the biggest winners) — see execution.py.
+  3. At 09:20: cancel anything still open (a defensive backstop only —
+     IOC orders resolve near-instantly, so this shouldn't normally find
+     anything left to do).
   4. At 15:00: reconcile against the broker's live position book (so a
      position closed/resized manually outside the bot is respected, not
      blindly re-exited into a reversed position) and MARKET-order out of
@@ -335,36 +338,45 @@ class ReversalBot:
             logger.error("No position sized to >=1 share — nothing to trade today")
             return
 
+        # Plan-before-place, for every name, BEFORE any network call fires —
+        # so a crash mid-ladder still leaves every intended position visible
+        # on disk as "pending" (run_exit_pass's orphan sweep is the backstop
+        # for anything that reached the broker before this ran).
+        for pos in sized:
+            self.state.add_planned_position(
+                pos["ticker"], pos["instrument_key"], pos["direction"],
+                pos["qty"], pos["price"],
+            )
+
+        quote_provider = self.engine.streamer.get_touch if self.engine.streamer else None
+        results = self.executor.place_entry_basket(sized, quote_provider=quote_provider)
+
         for pos in sized:
             ticker = pos["ticker"]
+            r = results.get(ticker)
+            if r is None:
+                continue
             try:
-                self.state.add_planned_position(
-                    ticker, pos["instrument_key"], pos["direction"],
-                    pos["qty"], pos["price"],
-                )
-                order_id, limit_price = self.executor.place_entry(pos)
-                self.state.record_entry_order(ticker, order_id, limit_price)
+                order_id = ",".join(r["order_ids"]) if r["order_ids"] else None
+                self.state.record_entry_order(ticker, order_id, r["last_limit_price"])
                 self.trade_log.log_entry_order(
                     ticker, pos["direction"], pos["qty"], pos["leverage"],
-                    pos["price"], limit_price, order_id,
+                    pos["price"], r["last_limit_price"], order_id,
                 )
-                if order_id is None:
-                    self.state.record_entry_result(ticker, "rejected")
-                    self.trade_log.log_entry_result(ticker, "rejected", 0, None)
+                self.state.record_entry_result(ticker, r["status"], r["filled_qty"], r["avg_fill_price"])
+                self.trade_log.log_entry_result(ticker, r["status"], r["filled_qty"], r["avg_fill_price"])
             except Exception:
                 # One name's bookkeeping hiccup (e.g. a transient disk-write
-                # error) must not abort the rest of the basket — place_entry()
-                # itself already catches broker/network failures internally,
-                # so anything reaching here is unexpected and needs a human
-                # look, but the other n_long+n_short-1 names still deserve
-                # their entry attempt. If the order actually reached the
-                # broker before this failed, run_exit_pass's orphan-position
-                # sweep will still find and flatten it later even without a
-                # clean local record.
-                logger.exception(f"{ticker}: entry pass hit an unexpected error — "
-                                  f"skipping this name, continuing with the rest of "
-                                  f"the basket. CHECK THE KOTAK NEO ORDER BOOK "
-                                  f"MANUALLY for {ticker}.")
+                # error) must not abort the rest of the basket's bookkeeping —
+                # place_entry_basket() itself already caught broker/network
+                # failures internally, so anything reaching here is
+                # unexpected and needs a human look. If the order actually
+                # reached the broker, run_exit_pass's orphan-position sweep
+                # will still find and flatten it later even without a clean
+                # local record.
+                logger.exception(f"{ticker}: entry pass bookkeeping hit an unexpected error — "
+                                  f"continuing with the rest of the basket. CHECK THE KOTAK "
+                                  f"NEO ORDER BOOK MANUALLY for {ticker}.")
 
     # ── Cancel unfilled (~09:20) ────────────────────────────────────
 
@@ -582,8 +594,14 @@ def run_trading_day(cfg: ConfigParser, capital: float):
         prev_close_budget = max(
             (market_open_dt - datetime.now(IST)).total_seconds() - prep_buffer_s, 0.0)
         bot.engine.fetch_prev_closes(max_seconds=prev_close_budget)
+        # Opens the market-data WebSocket now, well before the open, so
+        # ticks are already flowing into memory by market_open — no bulk
+        # REST LTP round trip sitting on the critical path after the wait
+        # below returns (see live_engine.SignalEngine.start_streaming).
+        bot.engine.start_streaming()
         wait_until(market_open, "market open")
         bot.run_entry_pass()
+        bot.engine.stop_streaming()
         wait_until(entry_cutoff, "entry cutoff")
         bot.run_cancel_pass()
     else:

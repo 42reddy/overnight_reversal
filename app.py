@@ -180,22 +180,26 @@ with tab_today:
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         if st.button("1. Fetch prior closes", disabled=_action_disabled(),
-                     help="Pulls each name's last completed-session close. Do this "
-                          "any time before the open — it's the slow call."):
+                     help="Pulls each name's last completed-session close, then opens "
+                          "the market-data stream for today's universe. Do this any "
+                          "time before the open — fetching prior closes is the slow call."):
             with st.spinner("Fetching prior closes..."):
                 try:
                     n = len(bot.engine.fetch_prev_closes())
-                    st.success(f"Prior close resolved for {n} tickers")
+                    bot.engine.start_streaming()
+                    st.success(f"Prior close resolved for {n} tickers, market-data stream started")
                 except Exception as e:
                     st.error(f"Failed: {e}")
 
     with c2:
         if st.button("2. Run entry", disabled=_action_disabled(),
-                     help="Ranks the universe on this morning's LTP vs prior close, "
-                          "sizes the basket, and fires LIMIT entry orders."):
+                     help="Ranks the universe on this morning's streamed open price vs "
+                          "prior close, sizes the basket, and fires a parallel IOC "
+                          "LIMIT ladder for the entries."):
             with st.spinner("Placing entries..."):
                 try:
                     bot.run_entry_pass()
+                    bot.engine.stop_streaming()
                     st.success("Entry pass complete — see basket below")
                 except Exception as e:
                     st.error(f"Failed: {e}")

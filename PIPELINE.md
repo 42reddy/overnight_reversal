@@ -21,9 +21,9 @@ leverage on both legs (see `config.ini` `[STRATEGY] intraday_leverage`).
 | `market_cap.py` | Offline/periodic refresh of `instruments.json`'s `market_cap` field via yfinance. Run by hand every few weeks (`python market_cap.py`) — market cap moves slowly enough that this is not part of the daily startup sequence and not on the trading day's critical path. |
 | `auth.py` | Two independent broker sessions. `get_kotak_client()` — fresh Kotak Neo TOTP+MPIN login every trading day (mobile/UCC/mpin/totp_secret from `.env`); this is the only client that ever touches orders. `get_analytics_client()` — Upstox's long-lived Analytics Access Token, read-only, market data only, no daily login. |
 | `instrument_master.py` | Downloads Upstox's NSE instrument master and fills in `instrument_key` for any ticker in `instruments.json` missing one — used only so `live_engine.py` can address Upstox's data API. Run standalone (`python instrument_master.py`) or it runs automatically once at bot startup. |
-| `live_engine.py` (`SignalEngine`) | The signal, via Upstox. `fetch_prev_closes()` (once, before the open) gets each ticker's last session close. `build_signals()` (at 09:15) does one bulk LTP call, computes overnight return, demeans it against a sqrt(market_cap)-weighted universe mean, and ranks the long/short basket. |
+| `live_engine.py` (`SignalEngine`, `LiveQuoteStreamer`) | The signal, via Upstox. `fetch_prev_closes()` (once, before the open) gets each ticker's last session close. `start_streaming()` (still before the open) opens a WebSocket subscription (`LiveQuoteStreamer`) so ticks + top-of-book bid/ask are already flowing into memory by 09:15. `build_signals()` (at 09:15) reads that streamed cache (falling back to a one-off REST LTP pull for any straggler ticker), computes overnight return, demeans it against a sqrt(market_cap)-weighted universe mean, and ranks the long/short basket. |
 | `sizing.py` (`PositionSizer`) | Turns signals into sized orders: capital / n_splits per slot, notional = slot × leverage, qty = floor(notional / price). Drops a name if excluded, over `max_share_price`, or too small for 1 share. Broker-agnostic. |
-| `execution.py` (`Executor`) | Places orders via Kotak Neo's `NeoAPI` (`neo_api_client`). Entry = LIMIT on `product=MIS` (both legs, same flat leverage; limit = signal price ± `entry_limit_buffer_bps`). Cancel-unfilled at 09:20 (now a real backstop, not just a rare race, since limit orders aren't guaranteed to fill). Exit = MARKET, reconciled against Kotak's live `positions()` book. `[SANDBOX] enabled=true` runs a purely local simulation — Kotak has no retail paper-trading environment. |
+| `execution.py` (`Executor`) | Places orders via Kotak Neo's `NeoAPI` (`neo_api_client`). Entry = `place_entry_basket()`: a ladder of parallel IOC LIMIT waves (`entry_ladder_bps`, e.g. 10/25/45bps) on `product=MIS` (both legs, same flat leverage), each rung's limit anchored to the live bid/ask from `LiveQuoteStreamer` (falling back to signal price ± cushion) — resolves in a few seconds since IOC doesn't rest. Cancel-unfilled at 09:20 is now just a defensive backstop (IOC orders don't sit open). Exit = MARKET, reconciled against Kotak's live `positions()` book. `[SANDBOX] enabled=true` runs a purely local simulation — Kotak has no retail paper-trading environment. |
 | `state.py` (`BasketState`) | Persists today's basket (`state/position.json`) — ticker, direction, qty, order ids, fill status. Broker-agnostic (keyed by ticker). Lets the bot (or the UI) restart mid-day without losing track of open legs. |
 | `trade_log.py` (`TradeLogger`) | Append-only day-by-day journal (`logs/trade_log.json`) with per-leg PnL and running portfolio totals (win rate, drawdown, etc). This is what the Streamlit calendar/portfolio tabs read. |
 | `bot.py` (`ReversalBot`) | Orchestrates one trading day: login (Kotak + Upstox) → refresh Upstox instrument keys → fetch prior closes → wait for open → entry pass → wait → cancel-unfilled → wait for exit window → exit pass → finalize day. Headless entry point (`python bot.py`). |
@@ -49,19 +49,22 @@ instruments.json (universe) ──▶ sizing.load_instruments() ──┬─▶ 
    auth.py.get_analytics_client()  → Upstox ApiClient (market data only)
 2. instrument_master.py            → fills missing Upstox instrument_key values in instruments.json (data only)
 3. SignalEngine.fetch_prev_closes()→ prior close per ticker via Upstox (slow, done before 09:15)
-4. [wait until market_open]
-5. SignalEngine.build_signals()    → one bulk Upstox LTP call, ranked overnight-return basket
-6. PositionSizer.size_positions()  → qty per name (capital/n_splits × leverage, floor by price)
-7. Executor.place_entry() × N      → Kotak Neo LIMIT orders  ┐
-   state.add_planned_position()                               ├─ written to state/position.json
-   trade_log.log_entry_order()                                 └─ and logs/trade_log.json
-8. [wait until entry_cutoff]
-9. Executor.cancel_unfilled()      → cancels anything still open on Kotak
-10. [wait until exit_start]
-11. Executor.get_net_positions()   → Kotak's live position book (source of truth)
-12. Executor.place_exits()         → MARKET orders closing every actually-open leg
-13. Executor.confirm_fills()       → reads back actual fill price/qty
-14. trade_log.finalize_day()       → computes day PnL, rolls into portfolio totals
+4. SignalEngine.start_streaming()  → opens the Upstox WebSocket for today's universe (still before 09:15)
+5. [wait until market_open]
+6. SignalEngine.build_signals()    → reads the streamed open-price cache (+ REST fallback for stragglers), ranked overnight-return basket
+7. PositionSizer.size_positions()  → qty per name (capital/n_splits × leverage, floor by price)
+8. state.add_planned_position() × N→ every sized name written to state/position.json BEFORE any order is placed
+9. Executor.place_entry_basket()   → parallel IOC LIMIT ladder waves on Kotak Neo ┐
+   state.record_entry_order/result()                                             ├─ written to state/position.json
+   trade_log.log_entry_order/result()                                            └─ and logs/trade_log.json
+10. SignalEngine.stop_streaming()  → closes the WebSocket
+11. [wait until entry_cutoff]
+12. Executor.cancel_unfilled()     → defensive backstop (IOC orders don't rest, so normally a no-op)
+13. [wait until exit_start]
+14. Executor.get_net_positions()   → Kotak's live position book (source of truth)
+15. Executor.place_exits()         → MARKET orders closing every actually-open leg
+16. Executor.confirm_fills()       → reads back actual fill price/qty
+17. trade_log.finalize_day()       → computes day PnL, rolls into portfolio totals
 ```
 
 `app.py` drives the same flow via four buttons instead of `wait_until()`
@@ -74,6 +77,7 @@ window. The Calendar and Portfolio tabs are pure reads of `logs/trade_log.json`.
 - **Universe** → `instruments.json`
 - **Market cap weights (for demeaning)** → `python market_cap.py`, every few weeks
 - **How many longs/shorts, capital, leverage, price cap** → `config.ini` `[STRATEGY]`
-- **Entry limit-order buffer** → `config.ini` `[STRATEGY] entry_limit_buffer_bps`
+- **Entry IOC ladder (rungs, parallelism, poll timing)** → `config.ini` `[STRATEGY] entry_ladder_bps` / `entry_parallelism` / `entry_ladder_poll_*`
+- **Streaming open-price capture window** → `config.ini` `[TIMING] open_capture_window_s`
 - **Entry/exit timing** → `config.ini` `[TIMING]`
 - **Sandbox vs. live** → `config.ini` `[SANDBOX] enabled`
