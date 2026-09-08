@@ -52,6 +52,7 @@ Run:
                               # still prompts interactively if a TTY is attached)
 """
 
+import faulthandler
 import fcntl
 import json
 import logging
@@ -699,6 +700,32 @@ def _ignore_terminal_hangup():
         signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
 
+_faulthandler_fd = None  # module-level and deliberately never closed — see _enable_hang_diagnostics
+
+
+def _enable_hang_diagnostics(log_file: str):
+    """
+    2026-09-08: a persistent-mode run froze completely — no crash, no
+    traceback, no further log lines — right after logging the sized basket
+    and before any order reached the broker. The operator ended up killing
+    the VM (tmux was unresponsive) because there was no way to see where
+    execution was actually stuck.
+
+    faulthandler.register(SIGUSR1) fixes that for next time: `kill -USR1
+    <pid>` (find it via state/bot.lock) dumps every thread's Python stack
+    to this file without touching the process, so a genuine hang can be
+    diagnosed instead of just killed and guessed at. dump_traceback_later
+    is a self-triggering backstop for the same output in case nobody
+    thinks to send the signal before giving up and killing it.
+    """
+    global _faulthandler_fd
+    dump_path = os.path.join(os.path.dirname(log_file) or ".", "hang_dump.txt")
+    _faulthandler_fd = open(dump_path, "a")
+    if hasattr(signal, "SIGUSR1"):
+        faulthandler.register(signal.SIGUSR1, file=_faulthandler_fd, all_threads=True, chain=False)
+    faulthandler.dump_traceback_later(900, repeat=True, file=_faulthandler_fd, exit=False)
+
+
 _lock_fd = None  # module-level and deliberately never closed — see _acquire_singleton_lock
 
 
@@ -754,6 +781,7 @@ def main():
     _load_env()
     cfg = load_config()
     setup_logging(cfg["PATHS"]["log_file"])
+    _enable_hang_diagnostics(cfg["PATHS"]["log_file"])
     _acquire_singleton_lock(cfg["PATHS"].get("lock_file", "state/bot.lock"))
 
     if "--once" in sys.argv:
