@@ -34,7 +34,20 @@ its place) if:
   - its live price exceeds STRATEGY.max_share_price, or
   - it's flagged exclude=true in instruments.json, or
   - it has no instrument_key resolved yet, or
-  - the resulting qty rounds down to 0 (slot too small for one share).
+  - the resulting qty rounds down to 0 (slot too small for one share), or
+  - its |demeaned overnight_ret| is below STRATEGY.min_overnight_move_pct.
+
+That last one matters because backfill on its own has no floor: if several
+of the strongest movers get skipped for one of the other reasons above
+(this is common when slot notional is small relative to the universe's
+price range — see max_share_price), the walk keeps reaching for the next
+candidate regardless of how weak a mover it is, all the way down to names
+that barely moved relative to the tape. daily_data_backtest.py has no
+equivalent failure mode — it always takes the literal top-n_long/n_short by
+rank, because it never deals with integer share counts. min_overnight_move_pct
+keeps live faithful to that: a slot that can't be filled with a real enough
+mover is left unfilled (basket shrinks below n_long+n_short) rather than
+diluted with a name the strategy has no real thesis for.
 
 Leftover-capital redistribution (0/1 knapsack)
 ────────────────────────────────────────────────
@@ -132,6 +145,7 @@ class PositionSizer:
         self.n_short          = int(s["n_short"])
         self.n_splits         = int(s.get("n_splits", self.n_long + self.n_short))
         self.max_share_price   = float(s["max_share_price"])
+        self.min_overnight_move_pct = float(s.get("min_overnight_move_pct", 0.0))
         self.intraday_leverage = float(s.get("intraday_leverage", 5.0))
         self.instruments       = instruments if instruments is not None else load_instruments(cfg)
 
@@ -161,6 +175,12 @@ class PositionSizer:
         if price > self.max_share_price:
             logger.info(f"{ticker}: price {price:,.2f} exceeds max_share_price "
                         f"{self.max_share_price:,.2f} — skipping")
+            return None
+        if abs(candidate["overnight_ret"]) < self.min_overnight_move_pct / 100.0:
+            logger.info(f"{ticker}: demeaned move {candidate['overnight_ret']:+.2%} is "
+                        f"weaker than min_overnight_move_pct {self.min_overnight_move_pct:.2f}% "
+                        f"— skipping rather than backfill into a name with no real thesis "
+                        f"(the slot will go unfilled if no stronger candidate remains)")
             return None
 
         leverage = self.intraday_leverage
@@ -216,6 +236,22 @@ class PositionSizer:
 
         n_filled = 0
         while lo <= hi and n_filled < self.n_long:
+            if ranked_candidates[lo]["overnight_ret"] >= 0:
+                # The pool is sorted ascending, so once the walk reaches a
+                # non-negative return every remaining candidate up to hi is
+                # too — this is "ran out of losers", not "keep skipping and
+                # maybe find one later". Without this guard, enough skips
+                # in the middle (weak movers, price cap, ...) can walk lo
+                # straight past zero into what should be short territory,
+                # sizing a WINNER into the long leg. Same failure mode
+                # mirrored on the short side below.
+                logger.warning(
+                    f"Long side ran out of losers (next candidate "
+                    f"{ranked_candidates[lo]['ticker']} has demeaned return "
+                    f"{ranked_candidates[lo]['overnight_ret']:+.2%}) — stopping long "
+                    f"backfill at {n_filled}/{self.n_long} rather than go long a winner"
+                )
+                break
             entry = self._try_size(ranked_candidates[lo], "long", slot_capital)
             lo += 1
             if entry is not None:
@@ -227,6 +263,14 @@ class PositionSizer:
 
         n_filled = 0
         while lo <= hi and n_filled < self.n_short:
+            if ranked_candidates[hi]["overnight_ret"] <= 0:
+                logger.warning(
+                    f"Short side ran out of winners (next candidate "
+                    f"{ranked_candidates[hi]['ticker']} has demeaned return "
+                    f"{ranked_candidates[hi]['overnight_ret']:+.2%}) — stopping short "
+                    f"backfill at {n_filled}/{self.n_short} rather than short a loser"
+                )
+                break
             entry = self._try_size(ranked_candidates[hi], "short", slot_capital)
             hi -= 1
             if entry is not None:
@@ -267,5 +311,12 @@ class PositionSizer:
             f"Leftover pool {leftover_pool:,.2f} → {len(bonus_idx)} bonus share(s) "
             f"granted, {bonus_spent:,.2f} utilized, {leftover_pool - bonus_spent:,.2f} "
             f"still unspent"
+        )
+        long_notional = sum(p["notional"] for p in sized if p["direction"] == "long")
+        short_notional = sum(p["notional"] for p in sized if p["direction"] == "short")
+        logger.info(
+            f"Deployed notional: LONG {long_notional:,.2f} + SHORT {short_notional:,.2f} "
+            f"= {long_notional + short_notional:,.2f} gross vs. capital {capital:,.2f} x "
+            f"{self.intraday_leverage:.1f}x leverage = {capital * self.intraday_leverage:,.2f} budget"
         )
         return sized

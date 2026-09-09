@@ -3,20 +3,25 @@ live_engine.py  —  Live cross-sectional overnight-reversal signal engine
 ──────────────────────────────────────────────────────────────────────────
 Same signal minute_backtest.py validates, run live:
 
-  r_co(ticker) = ltp_at_open / prior_session_close - 1
-  demeaned      = r_co - weighted_mean(r_co across the universe, that
-                  morning), weight = sqrt(market_cap) — ranking uses the
-                  demeaned value. This is a deliberate DIVERGENCE from
-                  daily_data_backtest.py's demean_cross_sectionally(),
-                  which uses a plain equal-weighted mean: a name like a
-                  large-cap actually moves/represents "the tape" much more
-                  than a microcap does, so it should pull the estimated
-                  common move harder. sqrt() (rather than raw market cap)
-                  keeps the single largest name in the universe from
-                  dominating the mean outright. See market_cap.py for
-                  where market_cap comes from (instruments.json, refreshed
-                  offline/periodically — it isn't available from any live
-                  market-data call this bot makes).
+  r_co(ticker) = open_price / prior_session_close - 1
+  demeaned      = r_co - mean(r_co across the universe, that morning) —
+                  ranking uses the demeaned value. The mean itself is
+                  controlled by STRATEGY.use_market_cap_weighting:
+                    false (default) — plain equal-weighted mean, exactly
+                      matching daily_data_backtest.py's
+                      demean_cross_sectionally(), so live and backtest
+                      rank candidates the same way.
+                    true — sqrt(market_cap)-weighted mean instead: a
+                      large-cap actually moves/represents "the tape" much
+                      more than a microcap does, so it should pull the
+                      estimated common move harder. sqrt() (rather than
+                      raw market cap) keeps the single largest name in the
+                      universe from dominating the mean outright. This is
+                      a deliberate DIVERGENCE from the backtest — see
+                      market_cap.py for where market_cap comes from
+                      (instruments.json, refreshed offline/periodically —
+                      it isn't available from any live market-data call
+                      this bot makes).
 
   Long  the n_long names with the most NEGATIVE (demeaned) r_co (biggest
         overnight losers relative to the tape — bet on reversal up).
@@ -34,10 +39,10 @@ Three-step, matched to the trading day:
      there's no request-response round trip sitting between "market opens"
      and "we know the price" the way a REST call fired after market_open
      would have — see build_signals()/_capture_open_quotes().
-  3. build_signals()     — call at/just after 09:15; reads the streamed
-     open-price cache (falling back to a one-off REST LTP pull for any
-     name that hasn't ticked yet), ranks the universe, and returns the
-     candidate pool.
+  3. build_signals()     — call at/just after 09:15; pulls each name's
+     official session-open (OHLC quote, not LTP — see
+     SignalEngine._capture_open_quotes for why), ranks the universe, and
+     returns the candidate pool.
 """
 
 import logging
@@ -67,16 +72,12 @@ class LiveQuoteStreamer:
     mode) with an in-memory {instrument_key: {"ltp", "bid", "ask", "ts"}}
     cache, continuously updated by the SDK's own background WS thread.
 
-    Two jobs:
-      - build_signals()'s open-price capture reads off this cache instead
-        of firing a bulk REST LTP call after market_open unblocks (see
-        SignalEngine._capture_open_quotes) — the connection is opened
-        during the pre-market prep window, well before 09:15, so it's
-        already receiving ticks by the time the open happens.
-      - execution.Executor.place_entry_basket() reads get_touch() live, at
-        the moment each entry-ladder rung fires, to anchor that rung's
-        limit price to the current best bid/ask instead of a flat bps off
-        the (by-then possibly stale) signal price.
+    One job: execution.Executor.place_entry_basket() reads get_touch()
+    live, at the moment each entry-ladder rung fires, to anchor that
+    rung's limit price to the current best bid/ask instead of a flat bps
+    off the (by-then possibly stale) signal price. (Open-price capture
+    used to read this cache's ltp too — see SignalEngine._capture_open_quotes
+    for why that moved to a dedicated OHLC-quote call instead.)
 
     Thread-safety: ticks arrive on the SDK's own background WS thread;
     every read/write of the cache goes through `_lock`.
@@ -173,6 +174,7 @@ class SignalEngine:
         self.max_share_price = float(s["max_share_price"])
         self.max_overnight_move_pct = float(s["max_overnight_move_pct"])
         self.max_data_error_pct = float(s.get("max_data_error_pct", 25.0))
+        self.use_market_cap_weighting = s.getboolean("use_market_cap_weighting", fallback=False)
         self.instruments = instruments if instruments is not None else load_instruments(cfg)
 
         self._api_client = api_client
@@ -286,70 +288,80 @@ class SignalEngine:
 
     def _capture_open_quotes(self, tickers) -> dict:
         """
-        Preferred open-price source: read whatever's already accumulated in
-        the streaming cache (see start_streaming/LiveQuoteStreamer), waiting
-        up to open_capture_window_s total for stragglers that haven't
-        printed a first trade yet. Anything still missing after that falls
-        back to a one-off bulk REST LTP pull — same call this used to make
-        for the *whole* universe unconditionally, now only hit for the
-        handful of names the stream didn't cover in time (or the stream
-        never came up at all, e.g. a bad connect — see start_streaming).
+        Open-price source: today's OHLC quote (`get_market_quote_ohlc`,
+        interval="1d"), read for its `ohlc.open` field — the exchange's
+        official session-open print, exactly what daily_data_backtest.py's
+        yfinance `open` column is.
+
+        This used to read the WebSocket stream's LTP (falling back to a
+        plain `ltp()` REST call): that was wrong on its own terms, not just
+        a timing race. LTP is "last traded price" — it only equals the open
+        at the very first tick. Any capture that lands even slightly late
+        (a slow WS message, a REST call a beat behind the first print) had
+        already drifted off the true open, silently corrupting r_co for
+        that name every time it happened. `ohlc.open` doesn't have this
+        problem: it's pinned to the session's first print and stays there
+        all day, so timing only affects *whether* a name has an open yet,
+        never *what value* it reports once it does.
+
+        Waits up to open_capture_window_s total for stragglers that haven't
+        printed a first trade yet (re-polling the same bulk call), then
+        proceeds with whatever's in by the deadline — matches
+        build_signals()'s existing tolerance for a partial candidate pool.
         """
-        if self.streamer is None:
-            logger.warning("No market-data stream active — falling back to a bulk REST "
-                            "LTP pull for the whole universe (call start_streaming() first "
-                            "to avoid this)")
-            return self._fetch_ltp_bulk(tickers)
-
-        keys = [self.instruments[t]["instrument_key"] for t in tickers]
-        key_to_ticker = {self.instruments[t]["instrument_key"]: t for t in tickers}
-
-        deadline = time.monotonic() + self.open_capture_window_s
-        missing_keys = self.streamer.wait_for_keys(keys, deadline)
-        ltp = {key_to_ticker[k]: px for k, px in self.streamer.snapshot_ltp(keys).items()}
-
-        if missing_keys:
-            missing_tickers = [key_to_ticker[k] for k in missing_keys]
-            logger.warning(
-                f"{len(missing_tickers)}/{len(tickers)} ticker(s) hadn't streamed a tick "
-                f"after {self.open_capture_window_s:.1f}s — falling back to a REST LTP pull "
-                f"for just these: {missing_tickers[:10]}" + (" ..." if len(missing_tickers) > 10 else "")
-            )
-            ltp.update(self._fetch_ltp_bulk(missing_tickers))
-
-        logger.info(f"Captured open prices for {len(ltp)}/{len(tickers)} ticker(s) "
-                    f"({len(tickers) - len(missing_keys)} via stream, {len(missing_keys)} via REST fallback)")
-        return ltp
-
-    def _fetch_ltp_bulk(self, tickers) -> dict:
-        """One bulk LTP call — used as a fallback (see _capture_open_quotes)
-        for whatever the market-data stream didn't cover in time, or for the
-        whole universe if the stream isn't up at all."""
         keys = [self.instruments[t]["instrument_key"] for t in tickers]
         key_to_ticker = {self.instruments[t]["instrument_key"]: t for t in tickers}
         if not keys:
             return {}
 
-        logger.info(f"Fetching open prices (LTP) for {len(keys)} ticker(s)...")
-        ltp = {}
+        deadline = time.monotonic() + self.open_capture_window_s
+        opens = {}
+        missing_keys = keys
+        while True:
+            opens.update(self._fetch_ohlc_open_bulk(missing_keys, key_to_ticker))
+            missing_keys = [k for k in missing_keys if key_to_ticker[k] not in opens]
+            if not missing_keys or time.monotonic() >= deadline:
+                break
+            time.sleep(min(1.0, deadline - time.monotonic()))
+
+        if missing_keys:
+            missing_tickers = [key_to_ticker[k] for k in missing_keys]
+            logger.warning(
+                f"{len(missing_tickers)}/{len(tickers)} ticker(s) still hadn't printed an "
+                f"open after {self.open_capture_window_s:.1f}s — dropping them for today: "
+                f"{missing_tickers[:10]}" + (" ..." if len(missing_tickers) > 10 else "")
+            )
+
+        logger.info(f"Captured open prices for {len(opens)}/{len(tickers)} ticker(s) "
+                    f"(official session open via OHLC quote)")
+        return opens
+
+    def _fetch_ohlc_open_bulk(self, keys, key_to_ticker) -> dict:
+        """One bulk OHLC-quote call (up to 1000 instruments per request —
+        our whole universe fits in one) — see _capture_open_quotes for why
+        ohlc.open, not ltp, is the field that matters here."""
+        if not keys:
+            return {}
+        opens = {}
         try:
-            resp = self.quote_api.ltp(symbol=",".join(keys), api_version=API_VERSION,
-                                       _request_timeout=REQUEST_TIMEOUT_S)
+            resp = self.quote_api.get_market_quote_ohlc(
+                symbol=",".join(keys), interval="1d", api_version=API_VERSION,
+                _request_timeout=REQUEST_TIMEOUT_S,
+            )
             for entry in (resp.data or {}).values():
                 ticker = key_to_ticker.get(entry.instrument_token)
-                if ticker:
-                    ltp[ticker] = float(entry.last_price)
-            logger.info(f"Fetched open prices for {len(ltp)}/{len(keys)} ticker(s)")
+                if ticker and entry.ohlc and entry.ohlc.open:
+                    opens[ticker] = float(entry.ohlc.open)
         except ApiException as e:
-            logger.error(f"Bulk LTP fetch failed: status={e.status} body={e.body}")
+            logger.error(f"Bulk OHLC-open fetch failed: status={e.status} body={e.body}")
         except Exception as e:
             # A timed-out connection surfaces as a raw urllib3/socket exception,
             # not an ApiException — without this, it would propagate uncaught
             # out of build_signals() and crash the entry pass instead of just
             # skipping today's entries gracefully (see run_entry_pass's
             # "no signals available" branch).
-            logger.error(f"Bulk LTP fetch error: {e}")
-        return ltp
+            logger.error(f"Bulk OHLC-open fetch error: {e}")
+        return opens
 
     def build_signals(self) -> list:
         """
@@ -404,22 +416,29 @@ class SignalEngine:
         if not rows:
             return []
 
-        weighted = [r for r in rows if r["_weight"] is not None]
-        unweighted = [r for r in rows if r["_weight"] is None]
-        if unweighted:
-            logger.warning(
-                f"{len(unweighted)}/{len(rows)} ticker(s) have no market_cap on file "
-                f"(run market_cap.py) — excluded from the market-mean estimate, still "
-                f"ranked against it: {[r['ticker'] for r in unweighted][:10]}"
-                + (" ..." if len(unweighted) > 10 else "")
-            )
+        if self.use_market_cap_weighting:
+            weighted = [r for r in rows if r["_weight"] is not None]
+            unweighted = [r for r in rows if r["_weight"] is None]
+            if unweighted:
+                logger.warning(
+                    f"{len(unweighted)}/{len(rows)} ticker(s) have no market_cap on file "
+                    f"(run market_cap.py) — excluded from the market-mean estimate, still "
+                    f"ranked against it: {[r['ticker'] for r in unweighted][:10]}"
+                    + (" ..." if len(unweighted) > 10 else "")
+                )
 
-        if weighted:
-            total_weight = sum(r["_weight"] for r in weighted)
-            mean_r = sum(r["_weight"] * r["r_co"] for r in weighted) / total_weight
+            if weighted:
+                total_weight = sum(r["_weight"] for r in weighted)
+                mean_r = sum(r["_weight"] * r["r_co"] for r in weighted) / total_weight
+            else:
+                logger.warning("No ticker has a market_cap on file — falling back to an "
+                               "equal-weighted mean for today (run market_cap.py)")
+                mean_r = sum(r["r_co"] for r in rows) / len(rows)
         else:
-            logger.warning("No ticker has a market_cap on file — falling back to an "
-                           "equal-weighted mean for today (run market_cap.py)")
+            # STRATEGY.use_market_cap_weighting=false (the default): plain
+            # equal-weighted mean, matching daily_data_backtest.py's
+            # demean_cross_sectionally() exactly — see that module's
+            # docstring for the tradeoff this toggle controls.
             mean_r = sum(r["r_co"] for r in rows) / len(rows)
 
         for r in rows:
