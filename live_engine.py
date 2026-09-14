@@ -42,7 +42,12 @@ Three-step, matched to the trading day:
   3. build_signals()     — call at/just after 09:15; pulls each name's
      official session-open (OHLC quote, not LTP — see
      SignalEngine._capture_open_quotes for why), ranks the universe, and
-     returns the candidate pool.
+     returns the candidate pool. This can take up to TIMING.open_capture_
+     window_s (default 30s) to return, since it waits for straggler names
+     to print their first continuous-session trade — see that config
+     entry for why a short window here silently shrinks the live universe
+     relative to daily_data_backtest.py's always-complete EOD data and
+     produces a basket that doesn't match backtest picks.
 """
 
 import logging
