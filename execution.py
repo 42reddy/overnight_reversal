@@ -62,18 +62,28 @@ ladder or a genuinely partial fill the way live trading can.
 
 CONCURRENCY: place_entry_basket() places orders for a whole ladder rung in
 parallel via a thread pool (STRATEGY.entry_parallelism). This relies on the
-installed Kotak SDK (kotakneoapi, httpx-based pooled client + its own
-thread-safe rate limiter) tolerating concurrent place_order/order_report
-calls from multiple threads on the same client — not independently
-live-verified end-to-end here; watch the first few live parallel mornings
-against the actual Kotak order book (no duplicate/dropped orders) before
-trusting this at higher concurrency. All state.py/trade_log.py bookkeeping
-stays on the caller's single thread (see bot.run_entry_pass) — only the
-broker network calls are parallelized.
+installed Kotak SDK (kotakneoapi, httpx-based pooled client) tolerating
+concurrent place_order/order_report calls from multiple threads on the same
+client — not independently live-verified end-to-end here; watch the first
+few live parallel mornings against the actual Kotak order book (no
+duplicate/dropped orders) before trusting this at higher concurrency. All
+state.py/trade_log.py bookkeeping stays on the caller's single thread (see
+bot.run_entry_pass) — only the broker network calls are parallelized.
+
+RATE LIMITING: entry_parallelism bounds how many entry orders can be IN
+FLIGHT at once; it does NOT bound how many get SENT per second, and Kotak
+was observed rejecting outright with stCode 100025 ("rate limit exceeded")
+when a rung's parallel submissions landed together. A _RateLimiter
+(STRATEGY.entry_rate_limit_per_sec, default 8/s) paces every place_order
+call regardless of thread, and any order still rejected with 100025 gets
+one immediate retry after entry_rate_limit_retry_delay_s. Tune
+entry_rate_limit_per_sec down if 100025 still appears in the logs, up if
+ladders are resolving slower than necessary with no rejections.
 """
 
 import concurrent.futures
 import logging
+import threading
 import time
 from configparser import ConfigParser
 from dataclasses import dataclass
@@ -132,11 +142,50 @@ def _ticker_from_trading_symbol(trading_symbol: str) -> str:
 def _round_to_tick(price: float, tick: float = 0.05) -> float:
     """NSE cash-equity tick size is Rs 0.05 for the overwhelming majority of
     listed equities — snap the computed limit price to a valid tick so the
-    exchange doesn't reject the order for an invalid price increment. (A
-    handful of very low-priced/illiquid names can carry a different tick
-    size; not handled here since instrument_master.py doesn't resolve tick
-    size today — if you trade such a name, verify its tick manually.)"""
-    return round(round(price / tick) * tick, 2)
+    exchange doesn't reject the order for an invalid price increment.
+
+    Worked entirely in integer paise rather than `round(price / tick) *
+    tick`: dividing by a float 0.05 accumulates binary floating-point
+    representation error that grows with price magnitude (e.g. 1620.2 /
+    0.05 does not land exactly on an integer in float arithmetic), so
+    higher-priced names occasionally snapped to the wrong tick. Converting
+    to integer paise first and rounding with plain integer arithmetic is
+    exact regardless of price. (A handful of very low-priced/illiquid names
+    can carry a different tick size than 0.05; not handled here since
+    instrument_master.py doesn't resolve tick size today — if you trade
+    such a name, verify its tick manually.)"""
+    price_paise = round(price * 100)
+    tick_paise = round(tick * 100)
+    if tick_paise <= 0:
+        return round(price, 2)
+    ticks = (price_paise + tick_paise // 2) // tick_paise
+    return round(ticks * tick_paise / 100.0, 2)
+
+
+class _RateLimiter:
+    """Thread-safe token-bucket limiter: blocks the calling thread until
+    it's safe to send another request, capping the SUSTAINED rate at
+    `rate_per_sec` requests/sec across every caller that shares this
+    instance. entry_parallelism controls how many entry orders can be IN
+    FLIGHT at once; this controls how many can be SENT per second, which is
+    what actually trips the broker's stCode 100025 ("rate limit
+    exceeded") — the two are complementary, not redundant."""
+
+    def __init__(self, rate_per_sec: float):
+        self._interval = 1.0 / rate_per_sec if rate_per_sec > 0 else 0.0
+        self._lock = threading.Lock()
+        self._next_slot = time.monotonic()
+
+    def acquire(self):
+        if self._interval <= 0:
+            return
+        with self._lock:
+            now = time.monotonic()
+            slot = max(now, self._next_slot)
+            self._next_slot = slot + self._interval
+        wait = slot - now
+        if wait > 0:
+            time.sleep(wait)
 
 
 class Executor:
@@ -149,6 +198,9 @@ class Executor:
         self.entry_ladder_poll_interval_s = float(s.get("entry_ladder_poll_interval_s", 0.4))
         self.entry_ladder_poll_timeout_s = float(s.get("entry_ladder_poll_timeout_s", 2.5))
         self.entry_parallelism = int(s.get("entry_parallelism", 8))
+        self.entry_rate_limit_per_sec = float(s.get("entry_rate_limit_per_sec", 8))
+        self.entry_rate_limit_retry_delay_s = float(s.get("entry_rate_limit_retry_delay_s", 0.35))
+        self._rate_limiter = _RateLimiter(self.entry_rate_limit_per_sec)
         self.dry_run = cfg["SANDBOX"].getboolean("enabled", fallback=True)
 
         # dry-run only: local simulated broker state
@@ -181,7 +233,16 @@ class Executor:
 
     def _place_ioc(self, ticker: str, direction: str, qty: int, limit_price: float, product: str) -> Optional[str]:
         """Fires one IOC LIMIT order. Returns order_id, or None if rejected
-        outright (never sent, or Kotak returned an error)."""
+        outright (never sent, or Kotak returned an error).
+
+        Every send passes through self._rate_limiter first, so a whole
+        rung's worth of parallel submissions is paced to
+        entry_rate_limit_per_sec rather than firing all at once — this is
+        what actually avoids stCode 100025 ("rate limit exceeded"), which
+        entry_parallelism alone (concurrency, not throughput) doesn't. If a
+        request still comes back rate-limited (e.g. another process is
+        sharing the same account/session), it gets exactly one retry after
+        a short delay before giving up on this rung for this name."""
         transaction = "B" if direction == "long" else "S"
 
         if self.dry_run:
@@ -194,29 +255,38 @@ class Executor:
                         f"(LMT {limit_price}) product={product} order_id={order_id}")
             return order_id
 
-        try:
-            resp = self.client.place_order(
-                exchange_segment=EXCHANGE_SEGMENT,
-                product=product,
-                price=str(limit_price),
-                order_type="L",
-                quantity=str(qty),
-                validity="IOC",
-                trading_symbol=_trading_symbol(ticker),
-                transaction_type=transaction,
-                amo="NO",
-                disclosed_quantity="0",
-                trigger_price="0",
-            )
-        except Exception as e:
-            logger.error(f"IOC ENTRY FAILED: {ticker} {transaction} {qty} @ {limit_price} error={e}")
-            return None
+        max_attempts = 2
+        for attempt in range(1, max_attempts + 1):
+            self._rate_limiter.acquire()
+            try:
+                resp = self.client.place_order(
+                    exchange_segment=EXCHANGE_SEGMENT,
+                    product=product,
+                    price=str(limit_price),
+                    order_type="L",
+                    quantity=str(qty),
+                    validity="IOC",
+                    trading_symbol=_trading_symbol(ticker),
+                    transaction_type=transaction,
+                    amo="NO",
+                    disclosed_quantity="0",
+                    trigger_price="0",
+                )
+            except Exception as e:
+                logger.error(f"IOC ENTRY FAILED: {ticker} {transaction} {qty} @ {limit_price} error={e}")
+                return None
 
-        order_id = self._extract_order_id(resp, ticker, transaction, qty, "IOC ENTRY")
-        if order_id is not None:
-            logger.info(f"IOC ENTRY placed: {ticker} {transaction} {qty} (LMT {limit_price}) "
-                        f"product={product} order_id={order_id}")
-        return order_id
+            if isinstance(resp, dict) and str(resp.get("stCode")) == "100025" and attempt < max_attempts:
+                logger.warning(f"{ticker}: rate limit exceeded on attempt {attempt}/{max_attempts} "
+                                f"— retrying in {self.entry_rate_limit_retry_delay_s:.2f}s")
+                time.sleep(self.entry_rate_limit_retry_delay_s)
+                continue
+
+            order_id = self._extract_order_id(resp, ticker, transaction, qty, "IOC ENTRY")
+            if order_id is not None:
+                logger.info(f"IOC ENTRY placed: {ticker} {transaction} {qty} (LMT {limit_price}) "
+                            f"product={product} order_id={order_id}")
+            return order_id
 
     def place_entry_basket(self, positions: list, quote_provider=None) -> dict:
         """

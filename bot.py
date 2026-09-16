@@ -71,7 +71,7 @@ import instrument_master
 from auth import get_kotak_client, get_analytics_client
 from execution import Executor
 from live_engine import SignalEngine
-from sizing import PositionSizer, load_instruments
+from sizing import PositionSizer, load_instruments, maximize_capital_utilization
 from state import BasketState
 from trade_log import TradeLogger
 
@@ -263,6 +263,57 @@ def _sleep_until(target_dt: datetime, shutdown: threading.Event, chunk_s: float 
         shutdown.wait(min(remaining, chunk_s))
 
 
+def _build_topup_positions(sized: list, results: dict) -> list:
+    """
+    Whatever notional the initial ladder left unfilled (a name rejected,
+    cancelled, or only partially filled) is still real, budgeted capital —
+    rather than let it sit idle for the day, pool it separately per
+    direction (never long shortfall topping up a short name or vice versa,
+    so the top-up can't unbalance the basket's dollar-neutrality) and hand
+    it to sizing.maximize_capital_utilization, which decides how many extra
+    shares of EACH already-filled name on that side to buy so as to use as
+    much of the pool as possible — an even split across names would strand
+    capital any time a name's price doesn't divide evenly into its share
+    (near-guaranteed once prices differ, e.g. a Rs.500 name and a Rs.3,000
+    name splitting one pool).
+
+    Returns a list of {ticker, instrument_key, direction, qty, price} dicts
+    ready to hand straight to Executor.place_entry_basket — empty if there
+    is no shortfall or nothing on that side to top up.
+    """
+    shortfall_notional = {"long": 0.0, "short": 0.0}
+    filled_by_direction = {"long": [], "short": []}
+
+    for pos in sized:
+        r = results.get(pos["ticker"])
+        if r is None:
+            continue
+        direction = pos["direction"]
+        missing_qty = pos["qty"] - r["filled_qty"]
+        if missing_qty > 0:
+            shortfall_notional[direction] += missing_qty * pos["price"]
+        if r["filled_qty"] > 0:
+            filled_by_direction[direction].append(pos)
+
+    topups = []
+    for direction, pool in shortfall_notional.items():
+        names = filled_by_direction[direction]
+        if pool <= 0 or not names:
+            continue
+        prices = [pos["price"] for pos in names]
+        extra_qtys = maximize_capital_utilization(prices, pool)
+        for pos, extra_qty in zip(names, extra_qtys):
+            if extra_qty >= 1:
+                topups.append({
+                    "ticker": pos["ticker"],
+                    "instrument_key": pos["instrument_key"],
+                    "direction": direction,
+                    "qty": extra_qty,
+                    "price": pos["price"],
+                })
+    return topups
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # BOT
 # ══════════════════════════════════════════════════════════════════════════════
@@ -276,6 +327,7 @@ class ReversalBot:
         self.state = BasketState(cfg["PATHS"]["state_file"])
         self.trade_log = TradeLogger(cfg["PATHS"]["trade_log_file"])
         self.sizer = PositionSizer(cfg, instruments=self.instruments)
+        self.topup_wait_s = float(cfg["STRATEGY"].get("entry_topup_wait_s", 2.0))
 
         self.api_client = None
         self.engine = None
@@ -378,6 +430,71 @@ class ReversalBot:
                 logger.exception(f"{ticker}: entry pass bookkeeping hit an unexpected error — "
                                   f"continuing with the rest of the basket. CHECK THE KOTAK "
                                   f"NEO ORDER BOOK MANUALLY for {ticker}.")
+
+        self._run_topup_pass(sized, results, quote_provider)
+
+    def _run_topup_pass(self, sized: list, results: dict, quote_provider):
+        """
+        The entry ladder above already resolves fully before returning (IOC
+        either fills or is cancelled by the exchange in seconds, and
+        place_entry_basket polls until every order from the wave is
+        terminal) — so by the time we get here there is nothing left open.
+        Any name that ended up rejected/cancelled/partial left its slot's
+        capital unused for the day.
+
+        Rather than let that sit idle, do ONE immediate top-up: pool the
+        unused notional (separately per long/short side, to keep the
+        basket dollar-neutral) and hand it to
+        sizing.maximize_capital_utilization to decide how many extra shares
+        of each already-filled name on that side to buy (see
+        _build_topup_positions — NOT an even split, which would strand
+        capital whenever prices don't divide evenly), then fire a second,
+        smaller IOC ladder for exactly that. The mean-reversion edge is at
+        the open, so this fires right away (a short settle buffer, not a
+        slow reallocation) and only fires once — it does not chase leftover
+        capital indefinitely.
+        """
+        try:
+            topups = _build_topup_positions(sized, results)
+        except Exception:
+            logger.exception("Top-up pass: failed to compute leftover-capital allocation — "
+                              "skipping top-up, original basket stands as filled.")
+            return
+        if not topups:
+            return
+
+        if self.topup_wait_s > 0:
+            logger.info(f"Entry ladder left capital unused on {len(topups)} name(s) — "
+                        f"waiting {self.topup_wait_s:.1f}s before the top-up pass")
+            time_module.sleep(self.topup_wait_s)
+
+        logger.info("── TOP-UP PASS ── redeploying leftover entry capital: "
+                    + ", ".join(f"{t['ticker']}+{t['qty']}" for t in topups))
+        try:
+            topup_results = self.executor.place_entry_basket(topups, quote_provider=quote_provider)
+        except Exception:
+            # Must never take the rest of the trading day down with it — a
+            # crash here must not skip run_cancel_pass/run_exit_pass for the
+            # positions the original ladder already opened (run_entry_pass
+            # is called unguarded from run_trading_day, so an exception
+            # propagating out of here would abort the whole day, including
+            # the 15:00 exit). The original basket is untouched either way.
+            logger.exception("Top-up pass: place_entry_basket crashed — skipping top-up for "
+                              "today. CHECK THE KOTAK NEO ORDER BOOK MANUALLY for stray orders.")
+            return
+
+        for t in topups:
+            ticker = t["ticker"]
+            r = topup_results.get(ticker)
+            if r is None or r["filled_qty"] <= 0:
+                continue
+            try:
+                order_id = ",".join(r["order_ids"]) if r["order_ids"] else None
+                self.state.record_entry_topup(ticker, r["filled_qty"], r["avg_fill_price"], order_id)
+                self.trade_log.log_entry_topup(ticker, r["filled_qty"], r["avg_fill_price"], order_id)
+            except Exception:
+                logger.exception(f"{ticker}: top-up bookkeeping hit an unexpected error — "
+                                  f"CHECK THE KOTAK NEO ORDER BOOK MANUALLY.")
 
     # ── Cancel unfilled (~09:20) ────────────────────────────────────
 

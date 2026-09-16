@@ -139,6 +139,37 @@ class BasketState:
         pos["entry_fill_price"] = fill_price
         self._save()
 
+    def record_entry_topup(self, ticker, extra_filled_qty, extra_fill_price, extra_order_id):
+        """Merge a top-up fill into an already-recorded position: increases
+        both the recorded target qty and the filled qty by the top-up
+        amount, and recomputes entry_fill_price as the qty-weighted average
+        across the original fill and the top-up (never overwrites it the
+        way record_entry_result does, since that would lose the original
+        fill's contribution to average price)."""
+        pos = self.positions.get(ticker)
+        if pos is None:
+            logger.warning(f"record_entry_topup: {ticker} not in today's basket")
+            return
+        prior_qty = pos["entry_filled_qty"]
+        prior_price = pos["entry_fill_price"]
+        new_qty = prior_qty + extra_filled_qty
+        if prior_qty > 0 and prior_price is not None:
+            pos["entry_fill_price"] = (prior_qty * prior_price + extra_filled_qty * extra_fill_price) / new_qty
+        else:
+            pos["entry_fill_price"] = extra_fill_price
+        pos["entry_filled_qty"] = new_qty
+        # The top-up deliberately expands this name's target size using
+        # leftover capital from elsewhere in the basket — raise the
+        # recorded target to match unless it was already higher (i.e. the
+        # original ladder hadn't even filled its own smaller target yet).
+        pos["qty"] = max(pos["qty"], new_qty)
+        pos["entry_status"] = "filled" if new_qty >= pos["qty"] else "partial"
+        pos["entry_order_id"] = (
+            f"{pos['entry_order_id']},{extra_order_id}" if pos.get("entry_order_id") and extra_order_id
+            else pos.get("entry_order_id") or extra_order_id
+        )
+        self._save()
+
     # ── Exit side ────────────────────────────────────────────────
 
     def record_exit_order(self, ticker, order_id):

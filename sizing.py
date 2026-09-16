@@ -138,6 +138,45 @@ def _bonus_share_subset(prices: list, pool: float) -> set:
     return set(reachable[best_sum])
 
 
+def maximize_capital_utilization(prices: list, pool: float) -> list:
+    """
+    Given a pool of capital and the per-name share prices of a set of
+    already-filled names, decide how many EXTRA shares of each to buy so as
+    to deploy as much of the pool as possible without exceeding it.
+
+    Unlike the leftover-remainder bonus above (capped at one share per
+    name, since each slot's own rounding remainder is always smaller than
+    one share), a redeployment pool (e.g. bot.py's entry top-up pass,
+    reclaiming capital an IOC ladder left unfilled elsewhere) can be many
+    multiples of a single share price, so an even split across names would
+    just strand capital again wherever a name's price doesn't divide
+    evenly into its share of the pool — e.g. splitting a shortfall evenly
+    between a Rs.500 name and a Rs.3,000 name almost never lands on a
+    whole-share amount for either.
+
+    Implemented as repeated rounds of the same exact 0/1 subset-sum DP
+    used for the leftover-remainder bonus (_bonus_share_subset): each round
+    asks "which subset of these names, bought one more share each, uses as
+    much of the CURRENTLY remaining pool as possible" and grants exactly
+    that subset, then repeats against what's left. Every successful round
+    strictly reduces the remaining pool by at least the cheapest eligible
+    price, so this always terminates — once no single name's price fits in
+    what's left, the round returns nothing and the loop stops.
+
+    Returns a list of extra-share counts, same length/order as `prices`.
+    """
+    extra = [0] * len(prices)
+    remaining = pool
+    while True:
+        idx = _bonus_share_subset(prices, remaining)
+        if not idx:
+            break
+        for i in idx:
+            extra[i] += 1
+            remaining -= prices[i]
+    return extra
+
+
 class PositionSizer:
     def __init__(self, cfg: ConfigParser, instruments: dict = None):
         s = cfg["STRATEGY"]

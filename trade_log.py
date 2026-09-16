@@ -161,6 +161,35 @@ class TradeLogger:
         logger.info(f"[TRADE LOG] Entry {ticker} {pos['direction'].upper()} "
                     f"status={status} filled={filled_qty}/{pos['qty']}@{fill_price}")
 
+    def log_entry_topup(self, ticker, extra_filled_qty, extra_fill_price, extra_order_id):
+        """Merge a top-up fill (see state.BasketState.record_entry_topup)
+        into the existing position row instead of appending a new one —
+        log_entry_order appends one row per ticker per day, so re-calling
+        it for a top-up would create a duplicate row and break PnL calc."""
+        pos = self._position(ticker)
+        if pos is None:
+            logger.warning(f"[TRADE LOG] log_entry_topup: {ticker} not found today")
+            return
+        prior_qty = pos["entry_filled_qty"]
+        prior_price = pos["entry_fill_price"]
+        new_qty = prior_qty + extra_filled_qty
+        if prior_qty > 0 and prior_price is not None:
+            pos["entry_fill_price"] = self._r(
+                (prior_qty * prior_price + extra_filled_qty * extra_fill_price) / new_qty
+            )
+        else:
+            pos["entry_fill_price"] = self._r(extra_fill_price)
+        pos["entry_filled_qty"] = new_qty
+        pos["qty"] = max(pos["qty"], new_qty)
+        pos["entry_status"] = "filled" if new_qty >= pos["qty"] else "partial"
+        pos["entry_order_id"] = (
+            f"{pos['entry_order_id']},{extra_order_id}" if pos.get("entry_order_id") and extra_order_id
+            else pos.get("entry_order_id") or extra_order_id
+        )
+        self._save()
+        logger.info(f"[TRADE LOG] Top-up {ticker} {pos['direction'].upper()} "
+                    f"+{extra_filled_qty}@{extra_fill_price} -> total {new_qty}@{pos['entry_fill_price']}")
+
     # ── Exit side ────────────────────────────────────────────────
 
     def log_exit_order(self, ticker, order_id):
