@@ -201,6 +201,7 @@ class Executor:
         self.entry_rate_limit_per_sec = float(s.get("entry_rate_limit_per_sec", 8))
         self.entry_rate_limit_retry_delay_s = float(s.get("entry_rate_limit_retry_delay_s", 0.35))
         self._rate_limiter = _RateLimiter(self.entry_rate_limit_per_sec)
+        self.entry_tick_sizes = [float(x) for x in s.get("entry_tick_sizes", "0.05,0.1").split(",") if x.strip()]
         self.dry_run = cfg["SANDBOX"].getboolean("enabled", fallback=True)
 
         # dry-run only: local simulated broker state
@@ -220,32 +221,51 @@ class Executor:
         exchange, not a spread-crossing margin, since ask/bid are already
         marketable). Falls back to signal_price*(1±cushion) — the old flat
         behaviour — for a name the stream has no depth for.
+
+        Returns the RAW reference price, not yet snapped to a tick — that
+        happens per-attempt inside _place_ioc, which tries each size in
+        entry_tick_sizes in turn (not every NSE name uses the same tick,
+        and there's no tick-size resolution step today — see
+        _round_to_tick), so the un-rounded value needs to survive to there.
         """
         buffer_frac = cushion_bps / 10_000.0
         if touch is not None:
             bid, ask = touch
             ref = ask if direction == "long" else bid
             if ref and ref > 0:
-                raw = ref * (1 + buffer_frac) if direction == "long" else ref * (1 - buffer_frac)
-                return _round_to_tick(raw)
-        raw = signal_price * (1 + buffer_frac if direction == "long" else 1 - buffer_frac)
-        return _round_to_tick(raw)
+                return ref * (1 + buffer_frac) if direction == "long" else ref * (1 - buffer_frac)
+        return signal_price * (1 + buffer_frac if direction == "long" else 1 - buffer_frac)
 
-    def _place_ioc(self, ticker: str, direction: str, qty: int, limit_price: float, product: str) -> Optional[str]:
+    def _place_ioc(self, ticker: str, direction: str, qty: int, raw_price: float, product: str) -> Optional[str]:
         """Fires one IOC LIMIT order. Returns order_id, or None if rejected
-        outright (never sent, or Kotak returned an error).
+        outright (never sent, or every retry was exhausted).
+
+        raw_price is the UN-rounded reference price from _rung_limit_price
+        — tick-rounding happens here, per attempt, because there are two
+        independent retry axes and the second one needs to change the tick:
+
+          - stCode 100025 ("rate limit exceeded"): the price was fine, sent
+            too fast. Retried at the SAME tick after a short delay — the
+            steady-state rate is already paced by self._rate_limiter, this
+            just catches whatever still slipped through.
+          - any other rejection: NSE tick size isn't uniformly Rs 0.05 (see
+            _round_to_tick) and there's no per-instrument tick-size
+            resolution today, so a wrong-tick price is a real, expected
+            failure — retried IMMEDIATELY (no delay, not a throughput
+            problem) at the next size in entry_tick_sizes (default
+            0.05, then 0.1). This is a broad net rather than matching a
+            specific error code (Kotak's exact tick-size error text isn't
+            confirmed) — cheap enough to always try given IOC orders
+            resolve in milliseconds, and it only fires on names 0.05
+            already failed for.
 
         Every send passes through self._rate_limiter first, so a whole
         rung's worth of parallel submissions is paced to
-        entry_rate_limit_per_sec rather than firing all at once — this is
-        what actually avoids stCode 100025 ("rate limit exceeded"), which
-        entry_parallelism alone (concurrency, not throughput) doesn't. If a
-        request still comes back rate-limited (e.g. another process is
-        sharing the same account/session), it gets exactly one retry after
-        a short delay before giving up on this rung for this name."""
+        entry_rate_limit_per_sec rather than firing all at once."""
         transaction = "B" if direction == "long" else "S"
 
         if self.dry_run:
+            limit_price = _round_to_tick(raw_price, self.entry_tick_sizes[0])
             order_id = f"SIM-{ticker}-ENTRY-{int(time.time() * 1000)}"
             self._sim_orders[order_id] = OrderSnapshot(order_id, "complete", qty, limit_price)
             signed = qty if direction == "long" else -qty
@@ -255,38 +275,54 @@ class Executor:
                         f"(LMT {limit_price}) product={product} order_id={order_id}")
             return order_id
 
-        max_attempts = 2
-        for attempt in range(1, max_attempts + 1):
-            self._rate_limiter.acquire()
-            try:
-                resp = self.client.place_order(
-                    exchange_segment=EXCHANGE_SEGMENT,
-                    product=product,
-                    price=str(limit_price),
-                    order_type="L",
-                    quantity=str(qty),
-                    validity="IOC",
-                    trading_symbol=_trading_symbol(ticker),
-                    transaction_type=transaction,
-                    amo="NO",
-                    disclosed_quantity="0",
-                    trigger_price="0",
-                )
-            except Exception as e:
-                logger.error(f"IOC ENTRY FAILED: {ticker} {transaction} {qty} @ {limit_price} error={e}")
-                return None
+        max_rl_attempts = 2
+        for tick_idx, tick in enumerate(self.entry_tick_sizes):
+            limit_price = _round_to_tick(raw_price, tick)
+            for rl_attempt in range(1, max_rl_attempts + 1):
+                self._rate_limiter.acquire()
+                try:
+                    resp = self.client.place_order(
+                        exchange_segment=EXCHANGE_SEGMENT,
+                        product=product,
+                        price=str(limit_price),
+                        order_type="L",
+                        quantity=str(qty),
+                        validity="IOC",
+                        trading_symbol=_trading_symbol(ticker),
+                        transaction_type=transaction,
+                        amo="NO",
+                        disclosed_quantity="0",
+                        trigger_price="0",
+                    )
+                except Exception as e:
+                    logger.error(f"IOC ENTRY FAILED: {ticker} {transaction} {qty} @ {limit_price} error={e}")
+                    return None
 
-            if isinstance(resp, dict) and str(resp.get("stCode")) == "100025" and attempt < max_attempts:
-                logger.warning(f"{ticker}: rate limit exceeded on attempt {attempt}/{max_attempts} "
-                                f"— retrying in {self.entry_rate_limit_retry_delay_s:.2f}s")
-                time.sleep(self.entry_rate_limit_retry_delay_s)
-                continue
+                rate_limited = isinstance(resp, dict) and str(resp.get("stCode")) == "100025"
+                if rate_limited and rl_attempt < max_rl_attempts:
+                    logger.warning(f"{ticker}: rate limit exceeded (tick={tick}) attempt "
+                                    f"{rl_attempt}/{max_rl_attempts} — retrying in "
+                                    f"{self.entry_rate_limit_retry_delay_s:.2f}s")
+                    time.sleep(self.entry_rate_limit_retry_delay_s)
+                    continue
 
-            order_id = self._extract_order_id(resp, ticker, transaction, qty, "IOC ENTRY")
-            if order_id is not None:
-                logger.info(f"IOC ENTRY placed: {ticker} {transaction} {qty} (LMT {limit_price}) "
-                            f"product={product} order_id={order_id}")
-            return order_id
+                order_id = self._extract_order_id(resp, ticker, transaction, qty, "IOC ENTRY")
+                if order_id is not None:
+                    logger.info(f"IOC ENTRY placed: {ticker} {transaction} {qty} "
+                                f"(LMT {limit_price}, tick={tick}) product={product} order_id={order_id}")
+                    return order_id
+
+                if rate_limited:
+                    # Retries exhausted on a throughput problem — a
+                    # different tick size won't fix that, so give up.
+                    return None
+                break  # rejected for a non-rate-limit reason — try the next tick size, if any
+
+            if tick_idx < len(self.entry_tick_sizes) - 1:
+                logger.warning(f"{ticker}: rejected at tick={tick} — retrying immediately "
+                                f"at tick={self.entry_tick_sizes[tick_idx + 1]}")
+
+        return None
 
     def place_entry_basket(self, positions: list, quote_provider=None) -> dict:
         """
@@ -330,11 +366,11 @@ class Executor:
                 for ticker in wave:
                     pos = by_ticker[ticker]
                     touch = quote_provider(pos["instrument_key"]) if quote_provider else None
-                    limit_price = self._rung_limit_price(pos["direction"], pos["price"], cushion_bps, touch)
-                    last_limit_price[ticker] = limit_price
+                    raw_price = self._rung_limit_price(pos["direction"], pos["price"], cushion_bps, touch)
+                    last_limit_price[ticker] = _round_to_tick(raw_price, self.entry_tick_sizes[0])
                     product = self.long_product if pos["direction"] == "long" else self.short_product
                     fut = pool.submit(self._place_ioc, ticker, pos["direction"],
-                                       remaining[ticker], limit_price, product)
+                                       remaining[ticker], raw_price, product)
                     futures[fut] = ticker
                 for fut in concurrent.futures.as_completed(futures):
                     ticker = futures[fut]
